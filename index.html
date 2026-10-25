@@ -91,27 +91,34 @@ async function loadMarkets(){
  ];
  const requests=urls.map(x=>getJson(x[2]));
  requests.push(getJson('https://api.binance.com/api/v3/klines?symbol='+encodeURIComponent(info.bin)+'&interval=1h&limit=24'));
- const results=await Promise.allSettled(requests),table=[],parsed={};
+ const results=await Promise.allSettled(requests),table=[],parsed={},exchangeStatus=[];
  results.slice(0,4).forEach((r,i)=>{
-  if(r.status!=='fulfilled')return;
-  try{
+  let item=null,error='';
+  if(r.status!=='fulfilled'){error='API non raggiungibile dal browser';}
+  else try{
    let d,price,change,high,low,volume;
    if(i===0){d=r.value;price=num(d.lastPrice);change=num(d.priceChangePercent);high=num(d.highPrice);low=num(d.lowPrice);volume=num(d.volume)}
    if(i===1){d=r.value;price=num(d.last);const open=num(d.open);change=open?(price-open)/open*100:NaN;high=num(d.high);low=num(d.low);volume=num(d.volume)}
-   if(i===2){d=r.value&&r.value.data&&r.value.data[0];if(!d)return;price=num(d.last);const open=num(d.open24h);change=open?(price-open)/open*100:NaN;high=num(d.high24h);low=num(d.low24h);volume=num(d.vol24h)}
-   if(i===3){d=r.value&&r.value.result&&r.value.result.list&&r.value.result.list[0];if(!d)return;price=num(d.lastPrice);change=num(d.price24hPcnt)*100;high=num(d.highPrice24h);low=num(d.lowPrice24h);volume=num(d.volume24h)}
-   if(!Number.isFinite(price)||price<=0)return;
-   const item={price,change,high,low,volume};parsed[urls[i][0]]=item;
-   table.push('<tr><td>'+urls[i][0]+'</td><td>'+esc(urls[i][1])+'</td><td>'+money(price)+'</td><td>'+pct(change)+'</td><td>'+money(high)+'</td><td>'+money(low)+'</td><td>'+ (Number.isFinite(volume)?new Intl.NumberFormat('en-US',{maximumFractionDigits:2,notation:'compact'}).format(volume):'—')+'</td></tr>');
-  }catch(e){}
+   if(i===2){d=r.value&&r.value.data&&r.value.data[0];if(!d)throw new Error('Nessun mercato restituito');price=num(d.last);const open=num(d.open24h);change=open?(price-open)/open*100:NaN;high=num(d.high24h);low=num(d.low24h);volume=num(d.vol24h)}
+   if(i===3){if(r.value&&r.value.retCode!==0)throw new Error(r.value.retMsg||'API error');d=r.value&&r.value.result&&r.value.result.list&&r.value.result.list[0];if(!d)throw new Error('Nessun mercato restituito');price=num(d.lastPrice);change=num(d.price24hPcnt)*100;high=num(d.highPrice24h);low=num(d.lowPrice24h);volume=num(d.volume24h)}
+   if(!Number.isFinite(price)||price<=0)throw new Error('Prezzo non valido');
+   item={price,change,high,low,volume};parsed[urls[i][0]]=item;
+  }catch(e){error=e.message||'Risposta non valida'}
+  if(item){
+   table.push('<tr><td>'+urls[i][0]+'</td><td>'+esc(urls[i][1])+'</td><td>'+money(item.price)+'</td><td>'+pct(item.change)+'</td><td>'+money(item.high)+'</td><td>'+money(item.low)+'</td><td>'+(Number.isFinite(item.volume)?new Intl.NumberFormat('en-US',{maximumFractionDigits:2,notation:'compact'}).format(item.volume):'—')+'</td></tr>');
+   exchangeStatus.push(urls[i][0]+': OK');
+  }else{
+   table.push('<tr><td>'+urls[i][0]+'</td><td>'+esc(urls[i][1])+'</td><td colspan="5" class="empty">Dato non disponibile — '+esc(error||'risposta non valida')+'</td></tr>');
+   exchangeStatus.push(urls[i][0]+': non disponibile');
+  }
  });
- $('marketRows').innerHTML=table.length?table.join(''):'<tr><td colspan="7" class="empty">Nessun exchange ha restituito dati per questa moneta. Prova più tardi o seleziona un altro asset.</td></tr>';
+ $('marketRows').innerHTML=table.join('');
  const bin=parsed.Binance,coin=parsed.Coinbase;
  setText('binPrice',bin?money(bin.price,'USD'):'Non disponibile');setText('binChange','Variazione 24h: '+(bin?pct(bin.change):'—'));
  setText('coinPrice',coin?money(coin.price,'USD'):'Non disponibile');setText('coinChange','Variazione 24h: '+(coin?pct(coin.change):'—'));
  if(bin&&coin&&coin.price){const diff=(bin.price-coin.price)/coin.price*100;setText('spread',pct(diff));}else setText('spread','—');
  if(results[4].status==='fulfilled'){const closes=results[4].value.map(k=>num(k[4])).filter(Number.isFinite);drawMarketChart(closes);if(closes.length>=6){const recent=closes.slice(-6),first=recent[0],last=recent[recent.length-1],change=(last-first)/first*100,mean=recent.reduce((a,b)=>a+b,0)/recent.length;const label=change>0.35&&last>mean?'Tendenza positiva':change< -0.35&&last<mean?'Tendenza negativa':'Laterale / incerta';setText('trend',label);setText('trendNote','Variazione ultime 6 candele orarie: '+pct(change)+'. Segnale descrittivo, non previsione certa.')}else{setText('trend','Dati insufficienti');setText('trendNote','Non ci sono abbastanza candele per calcolare l’indicatore')}}else{drawMarketChart([]);setText('trend','Non disponibile');setText('trendNote','L’API storica non ha risposto')}
- const ok=results.slice(0,4).filter(x=>x.status==='fulfilled').length;setText('marketStatus',table.length+' exchange con dati · '+new Date().toLocaleTimeString('it-IT'));
+ const ok=Object.keys(parsed).length;setText('marketStatus',ok+' di 4 exchange con prezzi · '+new Date().toLocaleTimeString('it-IT'));
 }
 initMarketAssets();$('marketRefresh').addEventListener('click',loadMarkets);$('marketAsset').addEventListener('change',loadMarkets);
 loadMarkets();setInterval(loadMarkets,60000);
