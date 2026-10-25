@@ -81,8 +81,16 @@ function setText(id,v){const e=$(id);if(e)e.textContent=v}
 function drawMarketChart(closes){const svg=$('marketChart');if(!closes||closes.length<2){svg.innerHTML='<text x="360" y="110" fill="#9caac4" text-anchor="middle">Dati storici non disponibili</text>';return}const min=Math.min(...closes),max=Math.max(...closes),range=max-min||1;const pts=closes.map((v,i)=>({x:24+i*672/(closes.length-1),y:190-(v-min)/range*160}));const path=pts.map((p,i)=>(i?'L':'M')+p.x.toFixed(1)+' '+p.y.toFixed(1)).join(' ');svg.innerHTML='<line x1="24" y1="190" x2="696" y2="190" stroke="#52637e"/><path d="'+path+'" fill="none" stroke="#79e0c3" stroke-width="2.5"/><text x="24" y="18" fill="#9caac4" font-size="12">'+esc(money(max))+' max</text><text x="24" y="212" fill="#9caac4" font-size="12">'+esc(money(min))+' min</text>'}
 function initMarketAssets(){const select=$('marketAsset');select.innerHTML=Object.entries(marketAssets).map(([symbol,a])=>'<option value="'+symbol+'">'+esc(a.name)+' ('+symbol+')</option>').join('');}
 function num(v){const n=Number(v);return Number.isFinite(n)?n:NaN}
+let marketLoading=false;
 async function loadMarkets(){
- const asset=$('marketAsset').value,info=marketAssets[asset];if(!info)return;setText('marketStatus','Aggiornamento…');$('marketRows').innerHTML='<tr><td colspan="7" class="empty">Caricamento dati pubblici…</td></tr>';
+ if(marketLoading)return;
+ const asset=$('marketAsset').value,info=marketAssets[asset];if(!info)return;
+ marketLoading=true;
+ setText('marketStatus','Aggiornamento dati…');
+ // Mantiene i valori già mostrati: aggiorna solo i dati, senza ricaricare la pagina
+ if(!$('marketRows').children.length || $('marketRows').textContent.includes('Premi “Aggiorna mercati”')) {
+  $('marketRows').innerHTML='<tr><td colspan="7" class="empty">Caricamento iniziale dei dati pubblici…</td></tr>';
+ }
  const urls=[
   ['Binance',info.bin,'https://api.binance.com/api/v3/ticker/24hr?symbol='+encodeURIComponent(info.bin),'binance'],
   ['Coinbase',info.coin,'https://api.exchange.coinbase.com/products/'+encodeURIComponent(info.coin)+'/stats','coinbase'],
@@ -118,9 +126,13 @@ async function loadMarkets(){
  setText('coinPrice',coin?money(coin.price,'USD'):'Non disponibile');setText('coinChange','Variazione 24h: '+(coin?pct(coin.change):'—'));
  if(bin&&coin&&coin.price){const diff=(bin.price-coin.price)/coin.price*100;setText('spread',pct(diff));}else setText('spread','—');
  if(results[4].status==='fulfilled'){const closes=results[4].value.map(k=>num(k[4])).filter(Number.isFinite);drawMarketChart(closes);if(closes.length>=6){const recent=closes.slice(-6),first=recent[0],last=recent[recent.length-1],change=(last-first)/first*100,mean=recent.reduce((a,b)=>a+b,0)/recent.length;const label=change>0.35&&last>mean?'Tendenza positiva':change< -0.35&&last<mean?'Tendenza negativa':'Laterale / incerta';setText('trend',label);setText('trendNote','Variazione ultime 6 candele orarie: '+pct(change)+'. Segnale descrittivo, non previsione certa.')}else{setText('trend','Dati insufficienti');setText('trendNote','Non ci sono abbastanza candele per calcolare l’indicatore')}}else{drawMarketChart([]);setText('trend','Non disponibile');setText('trendNote','L’API storica non ha risposto')}
- const ok=Object.keys(parsed).length;setText('marketStatus',ok+' di 4 exchange con prezzi · '+new Date().toLocaleTimeString('it-IT'));
+ const ok=Object.keys(parsed).length;setText('marketStatus',ok+' di 4 exchange con prezzi · aggiornato '+new Date().toLocaleTimeString('it-IT'));
+ marketLoading=false;
 }
-initMarketAssets();$('marketRefresh').addEventListener('click',loadMarkets);$('marketAsset').addEventListener('change',loadMarkets);
-loadMarkets();setInterval(loadMarkets,5000);
+initMarketAssets();
+$('marketRefresh').addEventListener('click',loadMarkets);
+$('marketAsset').addEventListener('change',loadMarkets);
+loadMarkets();
+setInterval(()=>{if(!document.hidden)loadMarkets()},5000);
 
 </script></body></html>
