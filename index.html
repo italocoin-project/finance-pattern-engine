@@ -7,8 +7,8 @@
 <header class="top"><div><div class="eyebrow">Analisi locale · Versione pubblica</div><h1>Finance Pattern Engine</h1><p>Analizza movimenti, filtra i risultati e individua segnali da verificare.</p></div><span class="pill">I dati restano nel tuo browser</span></header>
 
 <section class="card" id="market" style="margin:22px 0">
- <div class="top"><div><div class="eyebrow">Mercati pubblici · Dati in tempo reale quando disponibili</div><h2 class="section-title" style="font-size:24px">Crypto Market Monitor</h2><p>Prezzi pubblici da Binance e Coinbase, confronto tra exchange e indicatore sperimentale di tendenza.</p></div><button id="marketRefresh" class="button">Aggiorna mercati</button></div>
- <div class="upload"><label>Asset <select id="marketAsset"><option value="BTC">Bitcoin (BTC)</option><option value="ETH">Ethereum (ETH)</option><option value="SOL">Solana (SOL)</option><option value="XRP">XRP</option><option value="ADA">Cardano (ADA)</option></select></label><span class="hint">Binance in USDT · Coinbase in USD (confronto indicativo)</span><span id="marketStatus" class="pill">In attesa di aggiornamento</span></div>
+ <div class="top"><div><div class="eyebrow">Mercati pubblici · Dati in tempo reale quando disponibili</div><h2 class="section-title" style="font-size:24px">Crypto Market Monitor</h2><p>Prezzi pubblici da Binance, Coinbase, OKX e Bybit su 30 criptovalute. Gli exchange possono non quotare tutti gli asset.</p></div><button id="marketRefresh" class="button">Aggiorna mercati</button></div>
+ <div class="upload"><label>Asset <select id="marketAsset" aria-label="Seleziona criptovaluta"></select></label><span class="hint">Binance / OKX / Bybit in USDT · Coinbase in USD (confronto indicativo)</span><span id="marketStatus" class="pill">In attesa di aggiornamento</span></div>
  <div class="grid" style="margin-bottom:14px">
   <div class="card"><div class="label">Prezzo Binance</div><div id="binPrice" class="metric">—</div><p id="binChange">Variazione 24h: —</p></div>
   <div class="card"><div class="label">Prezzo Coinbase</div><div id="coinPrice" class="metric">—</div><p id="coinChange">Variazione 24h: —</p></div>
@@ -17,7 +17,7 @@
  </div>
  <div class="table-wrap"><table><thead><tr><th>Exchange</th><th>Mercato</th><th>Prezzo</th><th>Variazione 24h</th><th>Massimo 24h</th><th>Minimo 24h</th><th>Volume base 24h</th></tr></thead><tbody id="marketRows"><tr><td colspan="7" class="empty">Premi “Aggiorna mercati” per caricare i dati pubblici.</td></tr></tbody></table></div>
  <h3 class="section-title" style="margin-top:20px">Ultime 24 ore · andamento indicativo</h3><svg id="marketChart" viewBox="0 0 720 220" role="img" aria-label="Grafico dei prezzi delle ultime 24 ore"><text x="360" y="110" fill="#9caac4" text-anchor="middle">Grafico in attesa dei dati</text></svg>
- <div class="hint">Fonte: endpoint pubblici di mercato. I dati possono essere ritardati, incompleti o non disponibili in alcune regioni. L’indicatore è una semplice euristica basata sulle ultime candele, non una previsione affidabile. Non è consulenza finanziaria. Questo sito non esegue ordini.</div>
+ <div class="hint">Fonti: endpoint pubblici di Binance, Coinbase, OKX e Bybit. Disponibilità e quotazioni variano per asset, regione e exchange; USDT e USD non sono perfettamente equivalenti. Il confronto non include commissioni, slippage o liquidità e non rappresenta profitto di arbitraggio. L’indicatore è euristico, non predice con certezza il futuro. Non è consulenza finanziaria e il sito non esegue ordini.</div>
 </section>\n<section class="card"><h2 class="section-title">Importa movimenti CSV</h2><p>Colonne supportate: data, descrizione, importo, soggetto. Puoi usare intestazioni italiane o inglesi.</p><div class="upload"><input id="file" type="file" accept=".csv,text/csv"><button id="demo" class="button secondary">Carica dati demo</button><button id="clear" class="button secondary">Azzera</button><button id="export" class="button">Esporta analisi CSV</button></div><div class="hint">Separatore virgola o punto e virgola. I file non vengono caricati su un server: l'analisi avviene in questa pagina. I segnali non sono prove di frode.</div></section>
 <section class="grid"><div class="card"><div class="label">Movimenti analizzati</div><div id="count" class="metric">0</div><div class="bar"><span id="countbar"></span></div></div><div class="card"><div class="label">Importo netto</div><div id="net" class="metric">€0,00</div><p>Somma dei movimenti importati</p></div><div class="card"><div class="label">Anomalie segnalate</div><div id="flags" class="metric">0</div><p>Segnali euristici da controllare</p></div><div class="card"><div class="label">Soggetti distinti</div><div id="entitiesCount" class="metric">0</div><p>Controparti identificate</p></div></section>
 <section class="card" style="margin-bottom:14px"><h2 class="section-title">Cerca e filtra</h2><div class="upload" style="margin-top:0"><input id="search" type="search" placeholder="Cerca descrizione, data o soggetto" aria-label="Cerca"><label>Segnale <select id="riskFilter"><option value="all">Tutti</option><option value="flagged">Da verificare</option><option value="high">Rischio alto</option><option value="medium">Rischio medio</option><option value="low">Rischio basso</option></select></label><label>Importo minimo <input id="minAmount" type="number" step="0.01" placeholder="Nessun limite" style="width:125px"></label><label>Importo massimo <input id="maxAmount" type="number" step="0.01" placeholder="Nessun limite" style="width:125px"></label></div><p class="hint">Il punteggio è un indicatore basato su regole semplici, non una probabilità statistica né un giudizio legale.</p></section>
@@ -42,28 +42,78 @@ $('clear').addEventListener('click',()=>{rows=[];$('file').value='';$('search').
 $('export').addEventListener('click',()=>{if(!analyzedRows.length){alert('Prima importa un CSV o carica i dati demo.');return}const quote=v=>'"'+String(v??'').replace(/"/g,'""')+'"';const csv=[['data','descrizione','soggetto','importo','punteggio_rischio','livello','segnali'],...filteredRows().map(r=>[r.date,r.description,r.entity,r.amount,r.score,r.level,r.reasons.join(' | ')])].map(row=>row.map(quote).join(';')).join('\r\n');const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='finance-pattern-analysis.csv';a.click();URL.revokeObjectURL(url)});
 $('demo').addEventListener('click',()=>{rows=[{date:'2026-10-01',description:'Pagamento affitto',amount:-780,entity:'Casa Rossi'},{date:'2026-10-02',description:'Stipendio',amount:2100,entity:'Azienda Alfa'},{date:'2026-10-03',description:'Bonifico ricorrente',amount:-120,entity:'Mario Bianchi'},{date:'2026-10-04',description:'Bonifico ricorrente',amount:-120,entity:'Mario Bianchi'},{date:'2026-10-05',description:'Bonifico ricorrente',amount:-120,entity:'Mario Bianchi'},{date:'2026-10-06',description:'Commissione urgente',amount:-950,entity:'Servizi Beta'},{date:'',description:'Pagamento carta',amount:-45,entity:'Soggetto non identificato'},{date:'2026-10-08',description:'Rimborso',amount:80,entity:'Azienda Alfa'}];render()});render();
 
-const marketAssets={BTC:{bin:'BTCUSDT',coin:'BTC-USD'},ETH:{bin:'ETHUSDT',coin:'ETH-USD'},SOL:{bin:'SOLUSDT',coin:'SOL-USD'},XRP:{bin:'XRPUSDT',coin:'XRP-USD'},ADA:{bin:'ADAUSDT',coin:'ADA-USD'}};
+const marketAssets={
+ BTC:{name:'Bitcoin',bin:'BTCUSDT',coin:'BTC-USD',okx:'BTC-USDT',bybit:'BTCUSDT'},
+ ETH:{name:'Ethereum',bin:'ETHUSDT',coin:'ETH-USD',okx:'ETH-USDT',bybit:'ETHUSDT'},
+ BNB:{name:'BNB',bin:'BNBUSDT',coin:'BNB-USD',okx:'BNB-USDT',bybit:'BNBUSDT'},
+ SOL:{name:'Solana',bin:'SOLUSDT',coin:'SOL-USD',okx:'SOL-USDT',bybit:'SOLUSDT'},
+ XRP:{name:'XRP',bin:'XRPUSDT',coin:'XRP-USD',okx:'XRP-USDT',bybit:'XRPUSDT'},
+ ADA:{name:'Cardano',bin:'ADAUSDT',coin:'ADA-USD',okx:'ADA-USDT',bybit:'ADAUSDT'},
+ DOGE:{name:'Dogecoin',bin:'DOGEUSDT',coin:'DOGE-USD',okx:'DOGE-USDT',bybit:'DOGEUSDT'},
+ TRX:{name:'TRON',bin:'TRXUSDT',coin:'TRX-USD',okx:'TRX-USDT',bybit:'TRXUSDT'},
+ TON:{name:'Toncoin',bin:'TONUSDT',coin:'TON-USD',okx:'TON-USDT',bybit:'TONUSDT'},
+ AVAX:{name:'Avalanche',bin:'AVAXUSDT',coin:'AVAX-USD',okx:'AVAX-USDT',bybit:'AVAXUSDT'},
+ LINK:{name:'Chainlink',bin:'LINKUSDT',coin:'LINK-USD',okx:'LINK-USDT',bybit:'LINKUSDT'},
+ DOT:{name:'Polkadot',bin:'DOTUSDT',coin:'DOT-USD',okx:'DOT-USDT',bybit:'DOTUSDT'},
+ LTC:{name:'Litecoin',bin:'LTCUSDT',coin:'LTC-USD',okx:'LTC-USDT',bybit:'LTCUSDT'},
+ BCH:{name:'Bitcoin Cash',bin:'BCHUSDT',coin:'BCH-USD',okx:'BCH-USDT',bybit:'BCHUSDT'},
+ XLM:{name:'Stellar',bin:'XLMUSDT',coin:'XLM-USD',okx:'XLM-USDT',bybit:'XLMUSDT'},
+ UNI:{name:'Uniswap',bin:'UNIUSDT',coin:'UNI-USD',okx:'UNI-USDT',bybit:'UNIUSDT'},
+ AAVE:{name:'Aave',bin:'AAVEUSDT',coin:'AAVE-USD',okx:'AAVE-USDT',bybit:'AAVEUSDT'},
+ NEAR:{name:'NEAR Protocol',bin:'NEARUSDT',coin:'NEAR-USD',okx:'NEAR-USDT',bybit:'NEARUSDT'},
+ ETC:{name:'Ethereum Classic',bin:'ETCUSDT',coin:'ETC-USD',okx:'ETC-USDT',bybit:'ETCUSDT'},
+ FIL:{name:'Filecoin',bin:'FILUSDT',coin:'FIL-USD',okx:'FIL-USDT',bybit:'FILUSDT'},
+ ICP:{name:'Internet Computer',bin:'ICPUSDT',coin:'ICP-USD',okx:'ICP-USDT',bybit:'ICPUSDT'},
+ ATOM:{name:'Cosmos',bin:'ATOMUSDT',coin:'ATOM-USD',okx:'ATOM-USDT',bybit:'ATOMUSDT'},
+ ARB:{name:'Arbitrum',bin:'ARBUSDT',coin:'ARB-USD',okx:'ARB-USDT',bybit:'ARBUSDT'},
+ OP:{name:'Optimism',bin:'OPUSDT',coin:'OP-USD',okx:'OP-USDT',bybit:'OPUSDT'},
+ SUI:{name:'Sui',bin:'SUIUSDT',coin:'SUI-USD',okx:'SUI-USDT',bybit:'SUIUSDT'},
+ SHIB:{name:'Shiba Inu',bin:'SHIBUSDT',coin:'SHIB-USD',okx:'SHIB-USDT',bybit:'SHIBUSDT'},
+ PEPE:{name:'Pepe',bin:'PEPEUSDT',coin:'PEPE-USD',okx:'PEPE-USDT',bybit:'PEPEUSDT'},
+ INJ:{name:'Injective',bin:'INJUSDT',coin:'INJ-USD',okx:'INJ-USDT',bybit:'INJUSDT'},
+ SEI:{name:'Sei',bin:'SEIUSDT',coin:'SEI-USD',okx:'SEI-USDT',bybit:'SEIUSDT'},
+ HBAR:{name:'Hedera',bin:'HBARUSDT',coin:'HBAR-USD',okx:'HBAR-USDT',bybit:'HBARUSDT'}
+};
 const money=(n,c='USD')=>Number.isFinite(n)?new Intl.NumberFormat('en-US',{style:'currency',currency:c,maximumFractionDigits:n<1?6:2}).format(n):'—';
 const pct=n=>Number.isFinite(n)?(n>0?'+':'')+n.toFixed(2)+'%':'—';
 async function getJson(url){const res=await fetch(url,{cache:'no-store'});if(!res.ok)throw new Error('HTTP '+res.status);return res.json()}
 function setText(id,v){const e=$(id);if(e)e.textContent=v}
 function drawMarketChart(closes){const svg=$('marketChart');if(!closes||closes.length<2){svg.innerHTML='<text x="360" y="110" fill="#9caac4" text-anchor="middle">Dati storici non disponibili</text>';return}const min=Math.min(...closes),max=Math.max(...closes),range=max-min||1;const pts=closes.map((v,i)=>({x:24+i*672/(closes.length-1),y:190-(v-min)/range*160}));const path=pts.map((p,i)=>(i?'L':'M')+p.x.toFixed(1)+' '+p.y.toFixed(1)).join(' ');svg.innerHTML='<line x1="24" y1="190" x2="696" y2="190" stroke="#52637e"/><path d="'+path+'" fill="none" stroke="#79e0c3" stroke-width="2.5"/><text x="24" y="18" fill="#9caac4" font-size="12">'+esc(money(max))+' max</text><text x="24" y="212" fill="#9caac4" font-size="12">'+esc(money(min))+' min</text>'}
+function initMarketAssets(){const select=$('marketAsset');select.innerHTML=Object.entries(marketAssets).map(([symbol,a])=>'<option value="'+symbol+'">'+esc(a.name)+' ('+symbol+')</option>').join('');}
+function num(v){const n=Number(v);return Number.isFinite(n)?n:NaN}
 async function loadMarkets(){
- const asset=$('marketAsset').value,info=marketAssets[asset];setText('marketStatus','Aggiornamento…');$('marketRows').innerHTML='<tr><td colspan="7" class="empty">Caricamento dati pubblici…</td></tr>';
- const binSymbol=asset+'USDT';
- const binUrl='https://api.binance.com/api/v3/ticker/24hr?symbol='+encodeURIComponent(binSymbol);
- const coinProduct=info.coin;
- const results=await Promise.allSettled([getJson(binUrl),getJson('https://api.exchange.coinbase.com/products/'+encodeURIComponent(coinProduct)+'/stats'),getJson('https://api.binance.com/api/v3/klines?symbol='+encodeURIComponent(binSymbol)+'&interval=1h&limit=24')]);
- let table=[],bin=null,coin=null;
- if(results[0].status==='fulfilled'){const d=results[0].value;bin={price:Number(d.lastPrice),change:Number(d.priceChangePercent),high:Number(d.highPrice),low:Number(d.lowPrice),volume:Number(d.volume)};table.push(['Binance',binSymbol,bin])}
- if(results[1].status==='fulfilled'){const d=results[1].value;coin={price:Number(d.last),open:Number(d.open),high:Number(d.high),low:Number(d.low),volume:Number(d.volume)};coin.change=coin.open?(coin.price-coin.open)/coin.open*100:NaN;table.push(['Coinbase',coinProduct,coin])}
- $('marketRows').innerHTML=table.length?table.map(([ex,pair,d])=>'<tr><td>'+ex+'</td><td>'+esc(pair)+'</td><td>'+money(d.price)+'</td><td>'+pct(d.change)+'</td><td>'+money(d.high)+'</td><td>'+money(d.low)+'</td><td>'+new Intl.NumberFormat('en-US',{maximumFractionDigits:2,notation:'compact'}).format(d.volume)+'</td></tr>').join(''):'<tr><td colspan="7" class="empty">Le API non sono raggiungibili in questo momento. Riprova più tardi.</td></tr>';
- setText('binPrice',bin?money(bin.price):'Non disponibile');setText('binChange','Variazione 24h: '+(bin?pct(bin.change):'—'));setText('coinPrice',coin?money(coin.price):'Non disponibile');setText('coinChange','Variazione 24h: '+(coin?pct(coin.change):'—'));
+ const asset=$('marketAsset').value,info=marketAssets[asset];if(!info)return;setText('marketStatus','Aggiornamento…');$('marketRows').innerHTML='<tr><td colspan="7" class="empty">Caricamento dati pubblici…</td></tr>';
+ const urls=[
+  ['Binance',info.bin,'https://api.binance.com/api/v3/ticker/24hr?symbol='+encodeURIComponent(info.bin),'binance'],
+  ['Coinbase',info.coin,'https://api.exchange.coinbase.com/products/'+encodeURIComponent(info.coin)+'/stats','coinbase'],
+  ['OKX',info.okx,'https://www.okx.com/api/v5/market/ticker?instId='+encodeURIComponent(info.okx),'okx'],
+  ['Bybit',info.bybit,'https://api.bybit.com/v5/market/tickers?category=spot&symbol='+encodeURIComponent(info.bybit),'bybit']
+ ];
+ const requests=urls.map(x=>getJson(x[2]));
+ requests.push(getJson('https://api.binance.com/api/v3/klines?symbol='+encodeURIComponent(info.bin)+'&interval=1h&limit=24'));
+ const results=await Promise.allSettled(requests),table=[],parsed={};
+ results.slice(0,4).forEach((r,i)=>{
+  if(r.status!=='fulfilled')return;
+  try{
+   let d,price,change,high,low,volume;
+   if(i===0){d=r.value;price=num(d.lastPrice);change=num(d.priceChangePercent);high=num(d.highPrice);low=num(d.lowPrice);volume=num(d.volume)}
+   if(i===1){d=r.value;price=num(d.last);const open=num(d.open);change=open?(price-open)/open*100:NaN;high=num(d.high);low=num(d.low);volume=num(d.volume)}
+   if(i===2){d=r.value&&r.value.data&&r.value.data[0];if(!d)return;price=num(d.last);change=num(d.change24h)*100;high=num(d.high24h);low=num(d.low24h);volume=num(d.vol24h)}
+   if(i===3){d=r.value&&r.value.result&&r.value.result.list&&r.value.result.list[0];if(!d)return;price=num(d.lastPrice);change=num(d.price24hPct)*100;high=num(d.highPrice24h);low=num(d.lowPrice24h);volume=num(d.volume24h)}
+   if(!Number.isFinite(price)||price<=0)return;
+   const item={price,change,high,low,volume};parsed[urls[i][0]]=item;
+   table.push('<tr><td>'+urls[i][0]+'</td><td>'+esc(urls[i][1])+'</td><td>'+money(price)+'</td><td>'+pct(change)+'</td><td>'+money(high)+'</td><td>'+money(low)+'</td><td>'+ (Number.isFinite(volume)?new Intl.NumberFormat('en-US',{maximumFractionDigits:2,notation:'compact'}).format(volume):'—')+'</td></tr>');
+  }catch(e){}
+ });
+ $('marketRows').innerHTML=table.length?table.join(''):'<tr><td colspan="7" class="empty">Nessun exchange ha restituito dati per questa moneta. Prova più tardi o seleziona un altro asset.</td></tr>';
+ const bin=parsed.Binance,coin=parsed.Coinbase;
+ setText('binPrice',bin?money(bin.price,'USD'):'Non disponibile');setText('binChange','Variazione 24h: '+(bin?pct(bin.change):'—'));
+ setText('coinPrice',coin?money(coin.price,'USD'):'Non disponibile');setText('coinChange','Variazione 24h: '+(coin?pct(coin.change):'—'));
  if(bin&&coin&&coin.price){const diff=(bin.price-coin.price)/coin.price*100;setText('spread',pct(diff));}else setText('spread','—');
- if(results[2].status==='fulfilled'){const closes=results[2].value.map(k=>Number(k[4])).filter(Number.isFinite);drawMarketChart(closes);if(closes.length>=6){const recent=closes.slice(-6),first=recent[0],last=recent[recent.length-1],change=(last-first)/first*100;const mean=recent.reduce((a,b)=>a+b,0)/recent.length;const label=change>0.35&&last>mean?'Tendenza positiva':change< -0.35&&last<mean?'Tendenza negativa':'Laterale / incerta';setText('trend',label);setText('trendNote','Variazione ultime 6 candele orarie: '+pct(change)+'. Non è una previsione.')}else{setText('trend','Dati insufficienti');setText('trendNote','Non ci sono abbastanza candele per calcolare l’indicatore')}}else{drawMarketChart([]);setText('trend','Non disponibile');setText('trendNote','L’API storica non ha risposto')}
- const ok=results.filter(x=>x.status==='fulfilled').length;setText('marketStatus',ok+' di 3 richieste riuscite · '+new Date().toLocaleTimeString('it-IT'));
+ if(results[4].status==='fulfilled'){const closes=results[4].value.map(k=>num(k[4])).filter(Number.isFinite);drawMarketChart(closes);if(closes.length>=6){const recent=closes.slice(-6),first=recent[0],last=recent[recent.length-1],change=(last-first)/first*100,mean=recent.reduce((a,b)=>a+b,0)/recent.length;const label=change>0.35&&last>mean?'Tendenza positiva':change< -0.35&&last<mean?'Tendenza negativa':'Laterale / incerta';setText('trend',label);setText('trendNote','Variazione ultime 6 candele orarie: '+pct(change)+'. Segnale descrittivo, non previsione certa.')}else{setText('trend','Dati insufficienti');setText('trendNote','Non ci sono abbastanza candele per calcolare l’indicatore')}}else{drawMarketChart([]);setText('trend','Non disponibile');setText('trendNote','L’API storica non ha risposto')}
+ const ok=results.slice(0,4).filter(x=>x.status==='fulfilled').length;setText('marketStatus',table.length+' exchange con dati · '+new Date().toLocaleTimeString('it-IT'));
 }
-$('marketRefresh').addEventListener('click',loadMarkets);$('marketAsset').addEventListener('change',loadMarkets);
+initMarketAssets();$('marketRefresh').addEventListener('click',loadMarkets);$('marketAsset').addEventListener('change',loadMarkets);
 loadMarkets();setInterval(loadMarkets,60000);
 
 </script></body></html>
