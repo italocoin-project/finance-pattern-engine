@@ -121,6 +121,6 @@ async function loadMarkets(){
  const ok=Object.keys(parsed).length;setText('marketStatus',ok+' di 4 exchange con prezzi · '+new Date().toLocaleTimeString('it-IT'));
 }
 initMarketAssets();$('marketRefresh').addEventListener('click',loadMarkets);$('marketAsset').addEventListener('change',loadMarkets);
-loadMarkets();setInterval(loadMarkets,60000);
+loadMarkets();setInterval(loadMarkets,5000);
 
 </script></body></html>
