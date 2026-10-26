@@ -1,24 +1,31 @@
 #!/usr/bin/env python3
 """Aggiorna una cache statica CoinMarketCap, evitando chiamate API dal browser."""
 import json
+import os
 import time
 import urllib.error
 import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 
-BASE = "https://pro-api.coinmarketcap.com/public-api/v3/cryptocurrency/listings/latest"
+BASE_KEYLESS = "https://pro-api.coinmarketcap.com/public-api/v3/cryptocurrency/listings/latest"
+BASE_AUTH = "https://pro-api.coinmarketcap.com/v3/cryptocurrency/listings/latest"
+API_KEY = os.environ.get("CMC_API_KEY", "").strip()
 OUT = Path("data/market/cmc-market.json")
 HEADERS = {"Accept": "application/json", "User-Agent": "FinancePatternEngine/1.0"}
 LIMIT = 100
 PAGES = 3
 
 def fetch_page(start):
-    url = f"{BASE}?start={start}&limit={LIMIT}&convert=USD"
+    base = BASE_AUTH if API_KEY else BASE_KEYLESS
+    url = f"{base}?start={start}&limit={LIMIT}&convert=USD"
+    headers = dict(HEADERS)
+    if API_KEY:
+        headers["X-CMC_PRO_API_KEY"] = API_KEY
     last_error = None
     for attempt in range(4):
         try:
-            req = urllib.request.Request(url, headers=HEADERS)
+            req = urllib.request.Request(url, headers=headers)
             with urllib.request.urlopen(req, timeout=25) as response:
                 payload = json.loads(response.read().decode("utf-8"))
             if not isinstance(payload.get("data"), list):
@@ -29,7 +36,7 @@ def fetch_page(start):
             last_error = exc
             if attempt < 3:
                 time.sleep(2 ** attempt)
-    raise RuntimeError(f"CoinMarketCap start={start}: {last_error}")
+    raise RuntimeError(f"CoinMarketCap start={start}: {last_error}. If the keyless endpoint is blocked, add a repository Actions secret named CMC_API_KEY.")
 
 def main():
     coins = []
