@@ -58,11 +58,27 @@ def get_json(url):
         return json.loads(response.read().decode("utf-8"))
 
 
+def fetch_binance_price(symbol):
+    # Prova in sequenza gli host API ufficiali Binance.
+    hosts = ("api.binance.com", "api1.binance.com", "api2.binance.com", "api3.binance.com")
+    errors = []
+    for host in hosts:
+        url = f"https://{host}/api/v3/ticker/price?symbol={symbol}"
+        try:
+            data = get_json(url)
+            price = float(data["price"])
+            if price <= 0:
+                raise ValueError("prezzo non positivo")
+            return price
+        except Exception as exc:
+            errors.append(f"{host}: {str(exc)[:100]}")
+    raise RuntimeError("Tutti gli host Binance hanno fallito: " + " | ".join(errors))
+
+
 def fetch_price(exchange, symbol, asset=None):
     try:
         if exchange == "binance":
-            data = get_json("https://api.binance.com/api/v3/ticker/price?symbol=" + symbol)
-            price = float(data["price"])
+            price = fetch_binance_price(symbol)
         elif exchange == "coinbase":
             data = get_json("https://api.exchange.coinbase.com/products/" + symbol + "/ticker")
             price = float(data["price"])
@@ -108,7 +124,7 @@ def main():
         for asset in ASSETS
     ]
     quotes = {asset: {} for asset in ASSETS}
-    # Chiamate concorrenti: il job orario non deve impiegare minuti per ogni asset.
+    # Chiamate concorrenti: il job periodico non deve impiegare minuti per ogni asset.
     with concurrent.futures.ThreadPoolExecutor(max_workers=16) as pool:
         for asset, exchange, price in pool.map(collect_one, tasks):
             quotes[asset][exchange] = price
