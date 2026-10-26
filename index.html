@@ -9,7 +9,7 @@
 <nav class="site-nav" aria-label="Navigazione principale"><a href="#market">Mercati live</a><a href="#savedMarketHistory">Storico dati</a><a href="#periodCompare">Analisi</a><a href="#educational">Guide crypto</a><a href="#dataNotes">Fonti e limiti</a></nav>
 
 <section class="card" id="market" style="margin:22px 0">
- <div class="top"><div><div class="eyebrow">Mercati pubblici · Dati in tempo reale quando disponibili</div><h2 class="section-title" style="font-size:24px">Crypto Market Monitor</h2><p>Prezzi pubblici da Binance, Coinbase, OKX e Bybit su 30 criptovalute. Gli exchange possono non quotare tutti gli asset.</p></div><button id="marketRefresh" class="button">Aggiorna mercati</button></div>
+ <div class="top"><div><div class="eyebrow">Mercati pubblici · Dati in tempo reale quando disponibili</div><h2 class="section-title" style="font-size:24px">Crypto Market Monitor</h2><p>Prezzi pubblici da Binance, Coinbase, OKX, Bybit e Kraken su 30 criptovalute. Gli exchange possono non quotare tutti gli asset.</p></div><button id="marketRefresh" class="button">Aggiorna mercati</button></div>
  <div class="upload"><label>Asset <select id="marketAsset" aria-label="Seleziona criptovaluta"></select></label><label>Grafico <select id="marketHours" aria-label="Intervallo del grafico"><option value="1">1 ora</option><option value="2">2 ore</option><option value="3">3 ore</option><option value="4">4 ore</option><option value="5">5 ore</option><option value="6">6 ore</option><option value="7">7 ore</option><option value="8">8 ore</option><option value="9">9 ore</option><option value="10">10 ore</option><option value="11">11 ore</option><option value="12">12 ore</option><option value="13">13 ore</option><option value="14">14 ore</option><option value="15">15 ore</option><option value="16">16 ore</option><option value="17">17 ore</option><option value="18">18 ore</option><option value="19">19 ore</option><option value="20">20 ore</option><option value="21">21 ore</option><option value="22">22 ore</option><option value="23">23 ore</option><option value="24" selected>24 ore</option></select></label><span class="hint">Seleziona da 1 a 24 ore. Prezzi pubblici; il grafico usa candele orarie Binance, con fallback su OKX se Binance non risponde.</span><span id="marketStatus" class="pill">In attesa di aggiornamento</span></div>
  <div class="grid" style="margin-bottom:14px">
   <div class="card"><div class="label">Prezzo Binance</div><div id="binPrice" class="metric">—</div><p id="binChange">Variazione 24h: —</p></div>
@@ -19,7 +19,7 @@
  </div>
  <div class="table-wrap"><table><thead><tr><th>Exchange</th><th>Mercato</th><th>Prezzo</th><th>Variazione 24h</th><th>Massimo 24h</th><th>Minimo 24h</th><th>Volume base 24h</th></tr></thead><tbody id="marketRows"><tr><td colspan="7" class="empty">Premi “Aggiorna mercati” per caricare i dati pubblici.</td></tr></tbody></table></div>
  <h3 class="section-title" style="margin-top:20px">Ultime <span id="marketChartHoursLabel">24</span> ore · andamento indicativo</h3><svg id="marketChart" viewBox="0 0 720 220" role="img" aria-label="Grafico dei prezzi delle ultime 24 ore"><text x="360" y="110" fill="#9caac4" text-anchor="middle">Grafico in attesa dei dati</text></svg>
- <div class="hint">Fonti: endpoint pubblici di Binance, Coinbase, OKX e Bybit. Disponibilità e quotazioni variano per asset, regione e exchange; USDT e USD non sono perfettamente equivalenti. Il confronto non include commissioni, slippage o liquidità e non rappresenta profitto di arbitraggio. L’indicatore è euristico, non predice con certezza il futuro. Non è consulenza finanziaria e il sito non esegue ordini.</div>
+ <div class="hint">Fonti: endpoint pubblici di Binance, Coinbase, OKX, Bybit e Kraken. Disponibilità e quotazioni variano per asset, regione e exchange; USDT e USD non sono perfettamente equivalenti. Il confronto non include commissioni, slippage o liquidità e non rappresenta profitto di arbitraggio. L’indicatore è euristico, non predice con certezza il futuro. Non è consulenza finanziaria e il sito non esegue ordini.</div>
 </section>
 
 <section class="card" id="savedMarketHistory" style="margin-bottom:14px">
@@ -175,6 +175,7 @@ const marketAssets={
  SEI:{name:'Sei',bin:'SEIUSDT',coin:'SEI-USD',okx:'SEI-USDT',bybit:'SEIUSDT'},
  HBAR:{name:'Hedera',bin:'HBARUSDT',coin:'HBAR-USD',okx:'HBAR-USDT',bybit:'HBARUSDT'}
 };
+const krakenPairs={BTC:'XBTUSD',ETH:'ETHUSD',BNB:'BNBUSD',SOL:'SOLUSD',XRP:'XRPUSD',ADA:'ADAUSD',DOGE:'DOGEUSD',TRX:'TRXUSD',TON:'TONUSD',AVAX:'AVAXUSD',LINK:'LINKUSD',DOT:'DOTUSD',LTC:'LTCUSD',BCH:'BCHUSD',XLM:'XLMUSD',UNI:'UNIUSD',AAVE:'AAVEUSD',NEAR:'NEARUSD',ETC:'ETCUSD',FIL:'FILUSD',ICP:'ICPUSD',ATOM:'ATOMUSD',ARB:'ARBUSD',OP:'OPUSD',SUI:'SUIUSD',SHIB:'SHIBUSD',PEPE:'PEPEUSD',INJ:'INJUSD',SEI:'SEIUSD',HBAR:'HBARUSD'};
 const money=(n,c='USD')=>Number.isFinite(n)?new Intl.NumberFormat('en-US',{style:'currency',currency:c,maximumFractionDigits:n<1?6:2}).format(n):'—';
 const pct=n=>Number.isFinite(n)?(n>0?'+':'')+n.toFixed(2)+'%':'—';
 async function getJson(url){const res=await fetch(url,{cache:'no-store'});if(!res.ok)throw new Error('HTTP '+res.status);return res.json()}
@@ -246,13 +247,14 @@ async function loadMarkets(){
   ['Binance',info.bin,'https://api.binance.com/api/v3/ticker/24hr?symbol='+encodeURIComponent(info.bin),'binance'],
   ['Coinbase',info.coin,'https://api.exchange.coinbase.com/products/'+encodeURIComponent(info.coin)+'/stats','coinbase'],
   ['OKX',info.okx,'https://www.okx.com/api/v5/market/ticker?instId='+encodeURIComponent(info.okx),'okx'],
-  ['Bybit',info.bybit,'https://api.bybit.com/v5/market/tickers?category=spot&symbol='+encodeURIComponent(info.bybit),'bybit']
+  ['Bybit',info.bybit,'https://api.bybit.com/v5/market/tickers?category=spot&symbol='+encodeURIComponent(info.bybit),'bybit'],
+  ['Kraken',krakenPairs[asset]||asset+'-USD','https://api.kraken.com/0/public/Ticker?pair='+encodeURIComponent(krakenPairs[asset]||asset+'USD'),'kraken']
  ];
  const requests=urls.map(x=>getJson(x[2]));
  requests.push(getJson('https://api.binance.com/api/v3/klines?symbol='+encodeURIComponent(info.bin)+'&interval=1h&limit='+encodeURIComponent($('marketHours').value)));
  requests.push(getJson('https://www.okx.com/api/v5/market/candles?instId='+encodeURIComponent(info.okx)+'&bar=1H&limit='+encodeURIComponent($('marketHours').value)));
  const results=await Promise.allSettled(requests),table=[],parsed={},exchangeStatus=[];
- results.slice(0,4).forEach((r,i)=>{
+ results.slice(0,5).forEach((r,i)=>{
   let item=null,error='';
   if(r.status!=='fulfilled'){error='API non raggiungibile dal browser';}
   else try{
@@ -261,6 +263,7 @@ async function loadMarkets(){
    if(i===1){d=r.value;price=num(d.last);const open=num(d.open);change=open?(price-open)/open*100:NaN;high=num(d.high);low=num(d.low);volume=num(d.volume)}
    if(i===2){d=r.value&&r.value.data&&r.value.data[0];if(!d)throw new Error('Nessun mercato restituito');price=num(d.last);const open=num(d.open24h);change=open?(price-open)/open*100:NaN;high=num(d.high24h);low=num(d.low24h);volume=num(d.vol24h)}
    if(i===3){if(r.value&&r.value.retCode!==0)throw new Error(r.value.retMsg||'API error');d=r.value&&r.value.result&&r.value.result.list&&r.value.result.list[0];if(!d)throw new Error('Nessun mercato restituito');price=num(d.lastPrice);change=num(d.price24hPcnt)*100;high=num(d.highPrice24h);low=num(d.lowPrice24h);volume=num(d.volume24h)}
+   if(i===4){if(r.value&&r.value.error&&r.value.error.length)throw new Error(r.value.error.join('; '));const vals=Object.values((r.value&&r.value.result)||{});d=vals[0];if(!d)throw new Error('Nessun mercato restituito');price=num(d.c&&d.c[0]);const open=num(d.o);change=open?(price-open)/open*100:NaN;high=num(d.h&&d.h[1]);low=num(d.l&&d.l[1]);volume=num(d.v&&d.v[1])}
    if(!Number.isFinite(price)||price<=0)throw new Error('Prezzo non valido');
    item={price,change,high,low,volume};parsed[urls[i][0]]=item;
   }catch(e){error=e.message||'Risposta non valida'}
@@ -277,8 +280,8 @@ async function loadMarkets(){
  setText('binPrice',bin?money(bin.price,'USD'):'Non disponibile');setText('binChange','Variazione 24h: '+(bin?pct(bin.change):'—'));
  setText('coinPrice',coin?money(coin.price,'USD'):'Non disponibile');setText('coinChange','Variazione 24h: '+(coin?pct(coin.change):'—'));
  if(bin&&coin&&coin.price){const diff=(bin.price-coin.price)/coin.price*100;setText('spread',pct(diff));}else setText('spread','—');
- let candleData=[],candleSource='Binance';if(results[4].status==='fulfilled'&&Array.isArray(results[4].value)){candleData=results[4].value.filter(k=>Array.isArray(k)&&Number.isFinite(num(k[4]))&&Number.isFinite(num(k[0]))).map(k=>({time:num(k[0]),close:num(k[4])}));}if(candleData.length<2&&results[5]&&results[5].status==='fulfilled'&&results[5].value&&Array.isArray(results[5].value.data)){candleData=results[5].value.data.filter(k=>Array.isArray(k)&&Number.isFinite(num(k[4]))&&Number.isFinite(num(k[0]))).map(k=>({time:num(k[0]),close:num(k[4])})).reverse();candleSource='OKX';}if(candleData.length>=2){const closes=candleData.map(k=>k.close);drawMarketChart(candleData);if(closes.length>=6){const recent=closes.slice(-6),first=recent[0],last=recent[recent.length-1],change=(last-first)/first*100,mean=recent.reduce((a,b)=>a+b,0)/recent.length;const label=change>0.35&&last>mean?'Tendenza positiva':change< -0.35&&last<mean?'Tendenza negativa':'Laterale / incerta';setText('trend',label);setText('trendNote','Fonte candele: '+candleSource+'. Variazione ultime 6 candele orarie: '+pct(change)+'. Segnale descrittivo, non previsione certa.')}else{setText('trend','Dati insufficienti');setText('trendNote','Fonte candele: '+candleSource+'. Non ci sono abbastanza candele per calcolare l’indicatore')}}else{drawMarketChart([]);setText('trend','Non disponibile');setText('trendNote','Le API storiche Binance e OKX non hanno restituito dati validi')}
- const ok=Object.keys(parsed).length;setText('marketStatus',ok+' di 4 exchange con prezzi · aggiornato '+new Date().toLocaleTimeString('it-IT'));
+ let candleData=[],candleSource='Binance';if(results[5].status==='fulfilled'&&Array.isArray(results[5].value)){candleData=results[4].value.filter(k=>Array.isArray(k)&&Number.isFinite(num(k[4]))&&Number.isFinite(num(k[0]))).map(k=>({time:num(k[0]),close:num(k[4])}));}if(candleData.length<2&&results[6]&&results[6].status==='fulfilled'&&results[6].value&&Array.isArray(results[6].value.data)){candleData=results[5].value.data.filter(k=>Array.isArray(k)&&Number.isFinite(num(k[4]))&&Number.isFinite(num(k[0]))).map(k=>({time:num(k[0]),close:num(k[4])})).reverse();candleSource='OKX';}if(candleData.length>=2){const closes=candleData.map(k=>k.close);drawMarketChart(candleData);if(closes.length>=6){const recent=closes.slice(-6),first=recent[0],last=recent[recent.length-1],change=(last-first)/first*100,mean=recent.reduce((a,b)=>a+b,0)/recent.length;const label=change>0.35&&last>mean?'Tendenza positiva':change< -0.35&&last<mean?'Tendenza negativa':'Laterale / incerta';setText('trend',label);setText('trendNote','Fonte candele: '+candleSource+'. Variazione ultime 6 candele orarie: '+pct(change)+'. Segnale descrittivo, non previsione certa.')}else{setText('trend','Dati insufficienti');setText('trendNote','Fonte candele: '+candleSource+'. Non ci sono abbastanza candele per calcolare l’indicatore')}}else{drawMarketChart([]);setText('trend','Non disponibile');setText('trendNote','Le API storiche Binance e OKX non hanno restituito dati validi')}
+ const ok=Object.keys(parsed).length;setText('marketStatus',ok+' di 5 exchange con prezzi · aggiornato '+new Date().toLocaleTimeString('it-IT'));
  marketLoading=false;
 }
 initMarketAssets();
