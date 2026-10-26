@@ -68,7 +68,7 @@ def main():
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps({
         "updated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-        "source": "CoinMarketCap Keyless Public API",
+        "source": "CoinMarketCap API",
         "count": len(normalized),
         "coins": normalized,
     }, ensure_ascii=False, separators=(",", ":")) + "\n", encoding="utf-8")
