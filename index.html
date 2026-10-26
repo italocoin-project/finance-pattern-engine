@@ -250,12 +250,12 @@ async function loadMarketOverview(){
  const assets=Object.entries(marketAssets),ids=Object.values(coinIds).join(',');
  const results=await Promise.allSettled([
   getJson('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids='+encodeURIComponent(ids)+'&order=market_cap_desc&per_page=100&page=1&sparkline=false'),
-  getJson('https://api.coingecko.com/api/v3/global'),
+  getJson('data/market/cmc-market.json'),
   Promise.allSettled(assets.map(async([symbol,a])=>{const d=await getJson('https://api.binance.com/api/v3/ticker/24hr?symbol='+encodeURIComponent(a.bin));return {symbol,name:a.name,price:num(d.lastPrice),change:num(d.priceChangePercent),volume:num(d.quoteVolume),high:num(d.highPrice),low:num(d.lowPrice)}}))
  ]);
  const meta=results[0].status==='fulfilled'&&Array.isArray(results[0].value)?results[0].value:[];
  marketMetadata={};meta.forEach(x=>{if(x&&x.symbol)marketMetadata[String(x.symbol).toUpperCase()]={marketCap:num(x.market_cap),circulatingSupply:num(x.circulating_supply),totalSupply:num(x.total_supply),maxSupply:num(x.max_supply),rank:num(x.market_cap_rank),image:x.image}});
- if(results[1].status==='fulfilled'&&results[1].value&&results[1].value.data&&results[1].value.data.market_cap_percentage){const dom=num(results[1].value.data.market_cap_percentage.btc);$('bitcoinDominance').textContent=Number.isFinite(dom)?dom.toFixed(2)+'%':'—'}else $('bitcoinDominance').textContent='Non disponibile';
+ if(results[1].status==='fulfilled'&&results[1].value){const dom=num(results[1].value.bitcoin_dominance);$('bitcoinDominance').textContent=Number.isFinite(dom)?dom.toFixed(2)+'%':'Non disponibile'}else $('bitcoinDominance').textContent='Non disponibile';
  const bin=results[2];
  overviewRows=(bin.status==='fulfilled'?bin.value.filter(x=>x.status==='fulfilled').map(x=>x.value):[]).map(x=>({...x,...(marketMetadata[x.symbol]||{})})).filter(x=>Number.isFinite(x.price)&&x.price>0);
  const bySymbol=new Map(overviewRows.map(x=>[x.symbol,x]));
