@@ -41,6 +41,10 @@ jobs:
               raise SystemExit(f"Kraken mapping mismatch: missing={sorted(assets-kraken_assets)}, extra={sorted(kraken_assets-assets)}")
           if 'value="kraken"' not in html:
               raise SystemExit("Kraken history filter missing")
+          if 'id="exchangeHealth"' not in html or "source-chip is-ok" not in html:
+              raise SystemExit("Exchange health UI missing")
+          if 'rel="canonical"' not in html or 'property="og:title"' not in html:
+              raise SystemExit("SEO canonical or Open Graph metadata missing")
           Path("/tmp/site.js").write_text("\n".join(scripts), encoding="utf-8")
           PY
           node --check /tmp/site.js
