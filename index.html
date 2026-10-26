@@ -68,13 +68,17 @@ function parseAmount(value){
  const n=Number(s);return Number.isFinite(n)?n:NaN;
 }
 function parseCsv(text){
+ const firstLine=String(text).split(/\r?\n/).find(line=>line.trim()!=='')||'';
+ const counts={',':0,';':0,'\t':0};let inQuotes=false;
+ for(let i=0;i<firstLine.length;i++){const ch=firstLine[i];if(ch==='"'&&inQuotes&&firstLine[i+1]==='"'){i++;continue}if(ch==='"'){inQuotes=!inQuotes;continue}if(!inQuotes&&Object.prototype.hasOwnProperty.call(counts,ch))counts[ch]++}
+ const delimiter=Object.keys(counts).sort((a,b)=>counts[b]-counts[a])[0];
  const out=[];let row=[],cell='',quoted=false;
- for(let i=0;i<text.length;i++){const ch=text[i];if(ch==='"'&&quoted&&text[i+1]==='"'){cell+='"';i++}else if(ch==='"'){quoted=!quoted}else if((ch===','||ch===';'||ch==='\t')&&!quoted){row.push(cell);cell=''}else if((ch==='\n'||ch==='\r')&&!quoted){if(ch==='\r'&&text[i+1]==='\n')i++;row.push(cell);if(row.some(v=>v.trim()!==''))out.push(row);row=[];cell=''}else cell+=ch}
+ for(let i=0;i<text.length;i++){const ch=text[i];if(ch==='"'&&quoted&&text[i+1]==='"'){cell+='"';i++}else if(ch==='"'){quoted=!quoted}else if(ch===delimiter&&!quoted){row.push(cell);cell=''}else if((ch==='\n'||ch==='\r')&&!quoted){if(ch==='\r'&&text[i+1]==='\n')i++;row.push(cell);if(row.some(v=>v.trim()!==''))out.push(row);row=[];cell=''}else cell+=ch}
  row.push(cell);if(row.some(v=>v.trim()!==''))out.push(row);if(out.length<2)throw new Error('CSV vuoto o senza righe dati.');
  const headers=out.shift().map(h=>String(h).trim().toLowerCase().replace(/^\uFEFF/,'').replace(/[\s-]+/g,'_'));
  const find=names=>headers.findIndex(h=>names.includes(h));
- const ix={date:find(['date','data','timestamp','time','datetime','data_ora']),description:find(['description','descrizione','memo','note','type','tipo','operation','operazione']),entity:find(['entity','soggetto','counterparty','controparte','from','to','address']),amount:find(['amount','importo','value','valore','net_amount','netto','total','totale']),txid:find(['txid','tx_hash','transaction_hash','hash','transaction_id','txid_hash']),chain:find(['chain','network','rete','blockchain'])};
- if(ix.amount<0)throw new Error('Colonna importo/amount non trovata.'); 
+ const ix={date:find(['date','data','timestamp','time','datetime','data_ora']),description:find(['description','descrizione','memo','note','type','tipo','operation','operazione']),entity:find(['entity','soggetto','counterparty','controparte','from','to','address']),amount:find(['amount','importo','value','valore','net_amount','netto','total','totale']),txid:find(['txid','tx_hash','txhash','transaction_hash','transactionhash','hash','transaction_id']),chain:find(['chain','network','rete','blockchain','blockchain_network'])};
+ if(ix.amount<0)throw new Error('Colonna importo/amount non trovata.');
  return out.map(r=>({date:ix.date>=0?String(r[ix.date]||'').trim().slice(0,10):'',description:ix.description>=0?String(r[ix.description]||'').trim():'Movimento importato',entity:ix.entity>=0?String(r[ix.entity]||'').trim():'Soggetto non identificato',amount:parseAmount(r[ix.amount]),txid:ix.txid>=0?String(r[ix.txid]||'').trim():'',chain:ix.chain>=0?String(r[ix.chain]||'').trim().toLowerCase():''})).filter(r=>Number.isFinite(r.amount));
 }
 function explorerUrl(txid,chain){
