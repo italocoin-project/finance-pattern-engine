@@ -9,16 +9,16 @@ class ArchiveMarketDataTests(unittest.TestCase):
         self.assertEqual(len(archive.ASSETS), 30)
         self.assertEqual(len(set(archive.ASSETS)), 30)
 
-    def test_tasks_cover_four_primary_exchanges_and_kraken(self):
+    def test_tasks_cover_three_primary_exchanges_and_kraken(self):
         tasks = [
             (asset, exchange, symbols[i])
             for asset, symbols in archive.ASSETS.items()
-            for i, exchange in enumerate(archive.EXCHANGES[:4])
+            for i, exchange in enumerate(archive.EXCHANGES[:3])
         ] + [
             (asset, "kraken", archive.KRAKEN_PAIRS.get(asset, ""))
             for asset in archive.ASSETS
         ]
-        self.assertEqual(len(tasks), 150)
+        self.assertEqual(len(tasks), 120)
         self.assertEqual(sum(task[1] == "kraken" for task in tasks), 30)
 
     @patch("scripts.archive_market_data.get_json")
@@ -35,11 +35,6 @@ class ArchiveMarketDataTests(unittest.TestCase):
     def test_okx_price_is_parsed(self, get_json):
         get_json.return_value = {"data": [{"last": "345.67"}]}
         self.assertEqual(archive.fetch_price("okx", "BTC-USDT", "BTC"), 345.67)
-
-    @patch("scripts.archive_market_data.get_json")
-    def test_bybit_price_is_parsed(self, get_json):
-        get_json.return_value = {"retCode": 0, "result": {"list": [{"lastPrice": "456.78"}]}}
-        self.assertEqual(archive.fetch_price("bybit", "BTCUSDT", "BTC"), 456.78)
 
     @patch("scripts.archive_market_data.get_json")
     def test_kraken_price_is_parsed(self, get_json):
