@@ -36,6 +36,7 @@
   <div class="card"><div class="label">Variazione nel periodo</div><div id="historyChange" class="metric">—</div><p>Basata sui campioni orari disponibili</p></div>
   <div class="card"><div class="label">Campioni salvati</div><div id="historyCount" class="metric">0</div><p>Non sono dati tick-by-tick</p></div>
  </div>
+ <div class="card" style="padding:12px;margin:0 0 14px"><h3 class="section-title" style="margin:4px 8px 0">Andamento dello storico selezionato</h3><svg id="savedHistoryChart" viewBox="0 0 720 230" role="img" aria-label="Grafico delle quotazioni archiviate"><text x="360" y="110" fill="#9caac4" text-anchor="middle">Caricamento dei campioni storici…</text></svg></div>
  <div class="table-wrap"><table><thead><tr><th>Data e ora (UTC)</th><th>Asset</th><th>Exchange</th><th>Prezzo</th><th>Fonte</th></tr></thead><tbody id="historyRows"><tr><td colspan="5" class="empty">Caricamento dello storico pubblico…</td></tr></tbody></table></div>
  <p class="hint">L’archivio viene salvato nel repository circa una volta all’ora tramite GitHub Actions. I periodi brevi mostrano solo i campioni realmente presenti: la raccolta oraria non può ricostruire dati al minuto. Se una fonte non risponde, il campione viene escluso; le date precedenti alla prima raccolta non possono essere ricostruite retroattivamente.</p>
 </section>
@@ -127,6 +128,15 @@ function renderSavedMarketHistory(){
  const first=records[0],last=records[records.length-1],price=r=>historyPrice(r,asset,exchange),time=r=>new Date(r.timestamp_utc).toLocaleString('it-IT',{timeZone:'UTC'})+' UTC';
  setText('historyFirst',first?money(price(first),'USD'):'—');setText('historyFirstTime',first?time(first):'Nessuna quotazione nel periodo');
  setText('historyLast',last?money(price(last),'USD'):'—');setText('historyLastTime',last?time(last):'—');
+ const chart=$('savedHistoryChart');
+ if(records.length<2){chart.innerHTML='<text x="360" y="110" fill="#9caac4" text-anchor="middle">Servono almeno due campioni salvati nel periodo selezionato</text>';}
+ else {
+  const values=records.map(price),lo=Math.min(...values),hi=Math.max(...values),span=hi-lo||Math.max(Math.abs(hi)*0.001,0.000001),left=46,right=690,top=28,bottom=172;
+  const pts=values.map((v,i)=>({x:left+i*(right-left)/(values.length-1),y:bottom-(v-lo)/span*(bottom-top)}));
+  const path=pts.map((p,i)=>(i?'L':'M')+p.x.toFixed(1)+' '+p.y.toFixed(1)).join(' ');
+  const fmt=t=>new Date(t).toLocaleString("it-IT",{timeZone:"UTC",day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"});
+  chart.innerHTML='<line x1="'+left+'" y1="'+bottom+'" x2="'+right+'" y2="'+bottom+'" stroke="#52637e"/><line x1="'+left+'" y1="'+top+'" x2="'+right+'" y2="'+top+'" stroke="#263650" stroke-dasharray="4 5"/><path d="'+path+'" fill="none" stroke="#71f0cb" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/><circle cx="'+pts[pts.length-1].x.toFixed(1)+'" cy="'+pts[pts.length-1].y.toFixed(1)+'" r="4" fill="#71f0cb"/><text x="'+left+'" y="18" fill="#9caac4" font-size="12">Max '+esc(money(hi))+'</text><text x="'+right+'" y="18" fill="#9caac4" font-size="12" text-anchor="end">Min '+esc(money(lo))+'</text><text x="'+left+'" y="195" fill="#9caac4" font-size="12">'+esc(fmt(Date.parse(first.timestamp_utc)))+'</text><text x="'+right+'" y="195" fill="#9caac4" font-size="12" text-anchor="end">'+esc(fmt(Date.parse(last.timestamp_utc)))+'</text><text x="360" y="220" fill="#9caac4" font-size="12" text-anchor="middle">'+records.length+' campioni orari disponibili · UTC</text>';
+ }
  const change=first&&last&&price(first)!==0?(price(last)-price(first))/price(first)*100:NaN;
  setText('historyChange',Number.isFinite(change)?pct(change):'—');setText('historyCount',String(records.length));
  $('historyRows').innerHTML=records.length?records.slice().reverse().slice(0,168).map(r=>'<tr><td>'+esc(time(r))+'</td><td>'+esc(asset)+'</td><td>'+esc(exchange.charAt(0).toUpperCase()+exchange.slice(1))+'</td><td>'+money(price(r),'USD')+'</td><td>Archivio GitHub Actions</td></tr>').join(''):'<tr><td colspan="5" class="empty">Nessuna quotazione reale salvata per questo asset, exchange e periodo. L’archivio non inventa valori mancanti.</td></tr>';
