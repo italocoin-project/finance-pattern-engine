@@ -25,9 +25,9 @@
 <section class="card" id="savedMarketHistory" style="margin-bottom:14px">
  <div class="top"><div><h2 class="section-title">Storico prezzi salvati</h2><p>Archivio automatico dei prezzi pubblici raccolti da GitHub Actions. I dati iniziano dalla prima raccolta riuscita; non sono transazioni o trasferimenti blockchain.</p></div><button id="historyRefresh" class="button secondary" type="button">Aggiorna storico</button></div>
  <div class="upload">
-  <label>Criptovaluta <select id="historyAsset"><option value="BTC">Bitcoin (BTC)</option><option value="ETH">Ethereum (ETH)</option><option value="SOL">Solana (SOL)</option></select></label>
+  <label>Criptovaluta <select id="historyAsset"><option value="BTC">Bitcoin (BTC)</option><option value="ETH">Ethereum (ETH)</option><option value="BNB">BNB</option><option value="SOL">Solana (SOL)</option><option value="XRP">XRP</option><option value="ADA">Cardano</option><option value="DOGE">Dogecoin</option><option value="TRX">TRON</option><option value="TON">Toncoin</option><option value="AVAX">Avalanche</option><option value="LINK">Chainlink</option><option value="DOT">Polkadot</option><option value="LTC">Litecoin</option><option value="BCH">Bitcoin Cash</option><option value="XLM">Stellar</option><option value="UNI">Uniswap</option><option value="AAVE">Aave</option><option value="NEAR">NEAR Protocol</option><option value="ETC">Ethereum Classic</option><option value="FIL">Filecoin</option><option value="ICP">Internet Computer</option><option value="ATOM">Cosmos</option><option value="ARB">Arbitrum</option><option value="OP">Optimism</option><option value="SUI">Sui</option><option value="SHIB">Shiba Inu</option><option value="PEPE">Pepe</option><option value="INJ">Injective</option><option value="SEI">Sei</option><option value="HBAR">Hedera</option></select></label>
   <label>Exchange <select id="historyExchange"><option value="coinbase">Coinbase</option><option value="okx">OKX</option><option value="binance">Binance</option><option value="bybit">Bybit</option></select></label>
-  <label>Periodo <select id="historyPeriod"><option value="1h">Ultima ora</option><option value="2h">Ultime 2 ore</option><option value="3h">Ultime 3 ore</option><option value="4h">Ultime 4 ore</option><option value="6h">Ultime 6 ore</option><option value="12h">Ultime 12 ore</option><option value="24h">Ultime 24 ore</option><option value="week">7 giorni</option><option value="month">30 giorni</option><option value="90d">90 giorni</option><option value="year">1 anno</option><option value="all">Tutto l’archivio</option></select></label>
+  <label>Periodo <select id="historyPeriod"><option value="1h">Ultima ora</option><option value="2h">Ultime 2 ore</option><option value="3h">Ultime 3 ore</option><option value="4h">Ultime 4 ore</option><option value="5h">Ultime 5 ore</option><option value="6h">Ultime 6 ore</option><option value="7h">Ultime 7 ore</option><option value="8h">Ultime 8 ore</option><option value="9h">Ultime 9 ore</option><option value="10h">Ultime 10 ore</option><option value="11h">Ultime 11 ore</option><option value="12h">Ultime 12 ore</option><option value="13h">Ultime 13 ore</option><option value="14h">Ultime 14 ore</option><option value="15h">Ultime 15 ore</option><option value="16h">Ultime 16 ore</option><option value="17h">Ultime 17 ore</option><option value="18h">Ultime 18 ore</option><option value="19h">Ultime 19 ore</option><option value="20h">Ultime 20 ore</option><option value="21h">Ultime 21 ore</option><option value="22h">Ultime 22 ore</option><option value="23h">Ultime 23 ore</option><option value="24h">Ultime 24 ore</option><option value="week">7 giorni</option><option value="month">30 giorni</option><option value="90d">90 giorni</option><option value="year">1 anno</option><option value="all">Tutto l’archivio</option></select></label>
   <span id="historyStatus" class="pill">Caricamento archivio…</span>
  </div>
  <div class="grid" style="margin-bottom:10px">
@@ -149,7 +149,7 @@ async function loadSavedMarketHistory(){
   if(!response.ok)throw new Error('GitHub API HTTP '+response.status);
   const files=await response.json(),jsonl=files.filter(f=>f.type==='file'&&f.name.length===15&&f.name.endsWith('.jsonl')&&Date.parse(f.name.slice(0,10)+'T00:00:00Z')).sort((a,b)=>a.name.localeCompare(b.name));
   const mode=$('historyPeriod').value,start=historyPeriodStart(mode),eligible=jsonl.filter(f=>mode==='all'||Date.parse(f.name.slice(0,10)+'T23:59:59Z')>=start.getTime());
-  const chosen=eligible.slice(-370);
+  const chosen=mode==='all'?eligible.slice(-1000):eligible.slice(-370);
   const batches=await Promise.allSettled(chosen.map(async file=>{const res=await fetch(file.download_url,{cache:'no-store'});if(!res.ok)throw new Error('HTTP '+res.status);const text=await res.text();return text.split(String.fromCharCode(10)).map(line=>line.replaceAll(String.fromCharCode(13),'')).filter(Boolean).map(line=>JSON.parse(line))}));
   savedMarketRecords=batches.filter(x=>x.status==='fulfilled').flatMap(x=>x.value).filter(r=>r&&r.timestamp_utc&&r.quotes);
   savedMarketRecords.sort((a,b)=>Date.parse(a.timestamp_utc)-Date.parse(b.timestamp_utc));
@@ -216,6 +216,6 @@ $('marketAsset').addEventListener('change',loadMarkets);
 $('marketHours').addEventListener('change',()=>{setText('marketChartHoursLabel',$('marketHours').value);loadMarkets()});
 loadMarkets();
 loadSavedMarketHistory();
-setInterval(()=>{if(!document.hidden)loadMarkets()},5000);
+setInterval(()=>{if(!document.hidden)loadMarkets()},60000);
 
 </script></body></html>
