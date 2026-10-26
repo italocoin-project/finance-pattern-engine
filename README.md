@@ -9,7 +9,7 @@ Monitor informativo dei mercati crypto con interfaccia in italiano, confronto tr
 ## Funzioni
 - Monitor live con quotazioni spot pubbliche da Binance, Coinbase, OKX e Bybit, quando raggiungibili; archivio storico con tentativi aggiuntivi tramite Kraken.
 - Monitor di 30 asset e confronto indicativo tra prezzi.
-- Grafico Binance a candele orarie selezionabili da 1 a 24 ore.
+- Grafico a candele orarie selezionabili da 1 a 24 ore, con fallback Binance → OKX → Kraken.
 - Archivio di campioni orari in `data/market/YYYY-MM-DD.jsonl`, raccolti tramite GitHub Actions.
 - Filtri storico da 1 a 24 ore, 7 giorni, 30 giorni, 90 giorni, un anno e archivio disponibile.
 - Analisi di file di movimenti importati localmente nel browser; budget e snapshot personali restano locali.
