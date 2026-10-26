@@ -60,7 +60,15 @@ def get_json(url):
 
 def fetch_binance_price(symbol):
     # Prova in sequenza gli host API ufficiali Binance.
-    hosts = ("api.binance.com", "api1.binance.com", "api2.binance.com", "api3.binance.com")
+    hosts = (
+        "api.binance.com",
+        "api-gcp.binance.com",
+        "api1.binance.com",
+        "api2.binance.com",
+        "api3.binance.com",
+        "api4.binance.com",
+        "data-api.binance.vision",
+    )
     errors = []
     for host in hosts:
         url = f"https://{host}/api/v3/ticker/price?symbol={symbol}"
