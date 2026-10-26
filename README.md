@@ -9,8 +9,8 @@ Monitor informativo dei mercati crypto con interfaccia in italiano, confronto tr
 ## Funzioni
 - Monitor live con quotazioni spot pubbliche da Binance, Coinbase, OKX e Kraken, quando raggiungibili.
 - Monitor di 30 asset e confronto indicativo tra prezzi.
-- Classifica con capitalizzazione di mercato, supply circolante, volume 24h e dominanza di Bitcoin tramite CoinGecko, con prezzi Binance quando disponibili.
-- Classifica globale consultabile a pagine fino alle prime 300 criptovalute per capitalizzazione (`markets.html`), con ricerca, ordinamento, prezzo, variazioni 24h/7g, volume e supply.
+- Classifica con capitalizzazione di mercato, supply circolante, volume 24h e dominanza di Bitcoin; prezzi di mercato tramite fonti pubbliche disponibili.
+- Classifica globale CoinMarketCap consultabile a pagine fino alle prime 300 criptovalute (`markets.html`), con ricerca, ordinamento, prezzo, variazioni 24h/7g, volume e supply.
 - Schede crypto (`coin.html?id=...`) con metriche fondamentali, descrizione, link ufficiali e grafici interattivi su 1 giorno, 7 giorni, 1 mese, 1 anno e storico completo.
 - Grafico a candele orarie selezionabili da 1 a 24 ore, con fallback Binance → OKX → Kraken.
 - Archivio di campioni orari in `data/market/YYYY-MM-DD.jsonl`, raccolti tramite GitHub Actions.
@@ -19,7 +19,7 @@ Monitor informativo dei mercati crypto con interfaccia in italiano, confronto tr
 - Guide educative e pagine informative.
 
 ## Fonti dei dati di mercato
-Le quotazioni exchange provengono dagli endpoint pubblici di Binance; capitalizzazione, supply, dominanza di Bitcoin, descrizioni e grafici delle schede provengono dall’API pubblica CoinGecko. Le API possono applicare limiti di frequenza o non essere disponibili: il sito segnala i dati mancanti invece di inventarli. I valori possono essere aggiornati con ritardo e non sono una garanzia per decisioni finanziarie.
+Le quotazioni e la classifica globale provengono dalla CoinMarketCap Keyless Public API, quando disponibile; i grafici storici delle schede usano l’API pubblica CoinGecko. Le quotazioni exchange provengono dagli endpoint pubblici di Binance. Le API possono applicare limiti di frequenza o non essere disponibili: il sito segnala i dati mancanti invece di inventarli. I valori possono essere aggiornati con ritardo e non sono una garanzia per decisioni finanziarie.
 
 ## Raccolta dati
 Il workflow `.github/workflows/archive-market-data.yml` è pianificato ogni ora. Il programma `scripts/archive_market_data.py` interroga endpoint pubblici per 30 asset e quattro exchange, salva il timestamp UTC e registra gli errori per le fonti non raggiungibili. Non inventa quotazioni mancanti. Alcuni endpoint possono restituire errori HTTP in base alla regione, alle restrizioni dell'exchange o alle regole anti-bot.
