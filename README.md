@@ -9,11 +9,16 @@ Monitor informativo dei mercati crypto con interfaccia in italiano, confronto tr
 ## Funzioni
 - Monitor live con quotazioni spot pubbliche da Binance, Coinbase, OKX e Kraken, quando raggiungibili.
 - Monitor di 30 asset e confronto indicativo tra prezzi.
+- Classifica con capitalizzazione di mercato, supply circolante, volume 24h e dominanza di Bitcoin tramite CoinGecko, con prezzi Binance quando disponibili.
+- Scheda dedicata per ciascuna delle 30 criptovalute (`coin.html?id=...`) con metriche fondamentali, descrizione, link ufficiali e grafico storico a 7 giorni.
 - Grafico a candele orarie selezionabili da 1 a 24 ore, con fallback Binance → OKX → Kraken.
 - Archivio di campioni orari in `data/market/YYYY-MM-DD.jsonl`, raccolti tramite GitHub Actions.
 - Filtri storico da 1 a 24 ore, 7 giorni, 30 giorni, 90 giorni, un anno e archivio disponibile.
 - Analisi di file di movimenti importati localmente nel browser; budget e snapshot personali restano locali.
 - Guide educative e pagine informative.
+
+## Fonti dei dati di mercato
+Le quotazioni exchange provengono dagli endpoint pubblici di Binance; capitalizzazione, supply, dominanza di Bitcoin, descrizioni e grafici delle schede provengono dall’API pubblica CoinGecko. Le API possono applicare limiti di frequenza o non essere disponibili: il sito segnala i dati mancanti invece di inventarli. I valori possono essere aggiornati con ritardo e non sono una garanzia per decisioni finanziarie.
 
 ## Raccolta dati
 Il workflow `.github/workflows/archive-market-data.yml` è pianificato ogni ora. Il programma `scripts/archive_market_data.py` interroga endpoint pubblici per 30 asset e quattro exchange, salva il timestamp UTC e registra gli errori per le fonti non raggiungibili. Non inventa quotazioni mancanti. Alcuni endpoint possono restituire errori HTTP in base alla regione, alle restrizioni dell'exchange o alle regole anti-bot.
