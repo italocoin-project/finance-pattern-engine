@@ -10,7 +10,8 @@ Monitor informativo dei mercati crypto con interfaccia in italiano, confronto tr
 - Monitor live con quotazioni spot pubbliche da Binance, Coinbase, OKX e Kraken, quando raggiungibili.
 - Monitor di 30 asset e confronto indicativo tra prezzi.
 - Classifica con capitalizzazione di mercato, supply circolante, volume 24h e dominanza di Bitcoin tramite CoinGecko, con prezzi Binance quando disponibili.
-- Scheda dedicata per ciascuna delle 30 criptovalute (`coin.html?id=...`) con metriche fondamentali, descrizione, link ufficiali e grafico storico a 7 giorni.
+- Classifica globale consultabile a pagine fino alle prime 250 criptovalute per capitalizzazione (`markets.html`), con ricerca, ordinamento, prezzo, variazioni 24h/7g, volume e supply.
+- Schede crypto (`coin.html?id=...`) con metriche fondamentali, descrizione, link ufficiali e grafici interattivi su 1 giorno, 7 giorni, 1 mese, 1 anno e storico completo.
 - Grafico a candele orarie selezionabili da 1 a 24 ore, con fallback Binance → OKX → Kraken.
 - Archivio di campioni orari in `data/market/YYYY-MM-DD.jsonl`, raccolti tramite GitHub Actions.
 - Filtri storico da 1 a 24 ore, 7 giorni, 30 giorni, 90 giorni, un anno e archivio disponibile.
