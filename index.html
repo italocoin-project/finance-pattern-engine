@@ -278,7 +278,7 @@ async function loadSavedMarketHistory(){
  try{
   const response=await fetch(archiveApi+'?ref=main',{cache:'no-store'});
   if(!response.ok)throw new Error('GitHub API HTTP '+response.status);
-  const files=await response.json(),jsonl=files.filter(f=>f.type==='file'&&f.name.length===16&&/^\\d{4}-\\d{2}-\\d{2}\\.jsonl$/.test(f.name)&&Date.parse(f.name.slice(0,10)+'T00:00:00Z')).sort((a,b)=>a.name.localeCompare(b.name));
+  const files=await response.json(),jsonl=files.filter(f=>f.type==='file'&&f.name.length===16&&/^\d{4}-\d{2}-\d{2}\.jsonl$/.test(f.name)&&Date.parse(f.name.slice(0,10)+'T00:00:00Z')).sort((a,b)=>a.name.localeCompare(b.name));
   const mode=$('historyPeriod').value,start=historyPeriodStart(mode),eligible=jsonl.filter(f=>mode==='all'||Date.parse(f.name.slice(0,10)+'T23:59:59Z')>=start.getTime());
   const chosen=mode==='all'?eligible.slice(-1000):eligible.slice(-370);
   // Limita le richieste parallele per non sovraccaricare GitHub e il browser quando si legge uno storico lungo.
