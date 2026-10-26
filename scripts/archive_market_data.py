@@ -40,7 +40,7 @@ ASSETS = {
     "SEI": ("SEIUSDT", "SEI-USD", "SEI-USDT", "SEIUSDT"),
     "HBAR": ("HBARUSDT", "HBAR-USD", "HBAR-USDT", "HBARUSDT"),
 }
-EXCHANGES = ("binance", "coinbase", "okx", "bybit", "kraken")
+EXCHANGES = ("binance", "coinbase", "okx", "kraken")
 KRAKEN_PAIRS = {
     "BTC": "XBTUSD", "ETH": "ETHUSD", "SOL": "SOLUSD", "XRP": "XRPUSD",
     "ADA": "ADAUSD", "DOGE": "DOGEUSD", "TRX": "TRXUSD", "AVAX": "AVAXUSD",
@@ -56,28 +56,6 @@ def get_json(url):
     req = urllib.request.Request(url, headers={"User-Agent": "FinancePatternEngine/1.1"})
     with urllib.request.urlopen(req, timeout=TIMEOUT) as response:
         return json.loads(response.read().decode("utf-8"))
-
-
-def fetch_bybit_price(symbol):
-    # Prova gli endpoint ufficiali Bybit, incluso quello EEA.
-    hosts = ("api.bybit.com", "api.bytick.com", "api.bybit.eu")
-    errors = []
-    for host in hosts:
-        url = f"https://{host}/v5/market/tickers?category=spot&symbol={symbol}"
-        try:
-            data = get_json(url)
-            if data.get("retCode") != 0:
-                raise ValueError(data.get("retMsg", "API error"))
-            rows = data.get("result", {}).get("list", [])
-            if not rows:
-                raise ValueError("Nessun ticker restituito")
-            price = float(rows[0]["lastPrice"])
-            if price <= 0:
-                raise ValueError("prezzo non positivo")
-            return price
-        except Exception as exc:
-            errors.append(f"{host}: {str(exc)[:100]}")
-    raise RuntimeError("Tutti gli endpoint Bybit hanno fallito: " + " | ".join(errors))
 
 
 def fetch_binance_price(symbol):
@@ -115,8 +93,6 @@ def fetch_price(exchange, symbol, asset=None):
         elif exchange == "okx":
             data = get_json("https://www.okx.com/api/v5/market/ticker?instId=" + symbol)
             price = float(data["data"][0]["last"])
-        elif exchange == "bybit":
-            price = fetch_bybit_price(symbol)
         else:
             pair = KRAKEN_PAIRS.get(asset or "")
             if not pair:
@@ -145,7 +121,7 @@ def main():
     tasks = [
         (asset, exchange, symbols[i])
         for asset, symbols in ASSETS.items()
-        for i, exchange in enumerate(EXCHANGES[:4])
+        for i, exchange in enumerate(EXCHANGES[:3])
     ] + [
         (asset, "kraken", KRAKEN_PAIRS.get(asset, ""))
         for asset in ASSETS
