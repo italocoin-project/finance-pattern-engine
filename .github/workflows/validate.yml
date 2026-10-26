@@ -29,6 +29,18 @@ jobs:
           scripts = re.findall(r"<script>(.*?)</script>", html, re.S)
           if not scripts:
               raise SystemExit("No inline script found")
+          assets_block = re.search(r"const marketAssets=\{(.*?)\n\};", html, re.S)
+          kraken_block = re.search(r"const krakenPairs=\{(.*?)\};", html, re.S)
+          if not assets_block or not kraken_block:
+              raise SystemExit("Market asset or Kraken mapping missing")
+          assets = set(re.findall(r"^\s*([A-Z0-9]+):\{", assets_block.group(1), re.M))
+          kraken_assets = set(re.findall(r"([A-Z0-9]+)\s*:", kraken_block.group(1)))
+          if len(assets) != 30:
+              raise SystemExit(f"Expected 30 market assets, found {len(assets)}")
+          if assets != kraken_assets:
+              raise SystemExit(f"Kraken mapping mismatch: missing={sorted(assets-kraken_assets)}, extra={sorted(kraken_assets-assets)}")
+          if 'value="kraken"' not in html:
+              raise SystemExit("Kraken history filter missing")
           Path("/tmp/site.js").write_text("\n".join(scripts), encoding="utf-8")
           PY
           node --check /tmp/site.js
