@@ -46,7 +46,13 @@ def main():
             time.sleep(1)
     normalized = []
     for c in coins:
-        quote = (c.get("quote") or {}).get("USD") or {}
+        raw_quote = c.get("quote") or {}
+        if isinstance(raw_quote, list):
+            quote = next((item for item in raw_quote if item.get("symbol") == "USD" or item.get("name") == "USD"), {})
+        elif isinstance(raw_quote, dict):
+            quote = raw_quote.get("USD") or raw_quote
+        else:
+            quote = {}
         normalized.append({
             "id": c.get("slug"),
             "name": c.get("name"),
