@@ -27,5 +27,10 @@ L'archivio inizia dalla prima raccolta riuscita: non è possibile ricostruire re
 - Le differenze tra prezzi USD e USDT, le commissioni, lo slippage e la liquidità impediscono di interpretare lo spread come profitto garantito.
 - Gli indicatori sono descrittivi e non sono consulenza finanziaria.
 
+## Verifiche automatiche
+- La workflow `Validate site and data collector` controlla la sintassi JavaScript, la compilazione Python, lo schema della sitemap e la coerenza dell'elenco dei 30 asset.
+- `scripts/test_archive_market_data.py` esegue test offline con risposte API simulate: non effettua ordini, non richiede chiavi API e non usa prezzi fittizi nel sito.
+- Gli endpoint pubblici possono essere bloccati o limitati in base alla regione; in questi casi il dato viene segnalato come non disponibile e non sostituito con una quotazione inventata.
+
 ## Pubblicità
 Prima di attivare Google AdSense, il gestore deve completare l'informativa privacy, inserire i dati reali del titolare e implementare i consensi/cookie richiesti per i visitatori interessati. Non sono stati inventati ID publisher o contatti.
