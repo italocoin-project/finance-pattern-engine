@@ -37,4 +37,5 @@ jobs:
             exit 0
           fi
           git commit -m "Refresh CoinMarketCap static market cache"
+          git pull --rebase origin main
           git push
