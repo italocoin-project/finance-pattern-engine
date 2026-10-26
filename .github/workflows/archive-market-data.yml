@@ -2,7 +2,7 @@ name: Archive public exchange market data
 
 on:
   schedule:
-    - cron: "* * * * *"
+    - cron: "*/5 * * * *"
   workflow_dispatch:
 
 permissions:
