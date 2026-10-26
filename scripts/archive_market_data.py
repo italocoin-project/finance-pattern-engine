@@ -40,7 +40,16 @@ ASSETS = {
     "SEI": ("SEIUSDT", "SEI-USD", "SEI-USDT", "SEIUSDT"),
     "HBAR": ("HBARUSDT", "HBAR-USD", "HBAR-USDT", "HBARUSDT"),
 }
-EXCHANGES = ("binance", "coinbase", "okx", "bybit")
+EXCHANGES = ("binance", "coinbase", "okx", "bybit", "kraken")
+KRAKEN_PAIRS = {
+    "BTC": "XBTUSD", "ETH": "ETHUSD", "SOL": "SOLUSD", "XRP": "XRPUSD",
+    "ADA": "ADAUSD", "DOGE": "DOGEUSD", "TRX": "TRXUSD", "AVAX": "AVAXUSD",
+    "LINK": "LINKUSD", "DOT": "DOTUSD", "LTC": "LTCUSD", "BCH": "BCHUSD",
+    "XLM": "XLMUSD", "UNI": "UNIUSD", "AAVE": "AAVEUSD", "NEAR": "NEARUSD",
+    "ETC": "ETCUSD", "FIL": "FILUSD", "ICP": "ICPUSD", "ATOM": "ATOMUSD",
+    "ARB": "ARBUSD", "OP": "OPUSD", "SUI": "SUIUSD", "SHIB": "SHIBUSD",
+    "PEPE": "PEPEUSD", "INJ": "INJUSD", "SEI": "SEIUSD", "HBAR": "HBARUSD",
+}
 
 
 def get_json(url):
@@ -49,7 +58,7 @@ def get_json(url):
         return json.loads(response.read().decode("utf-8"))
 
 
-def fetch_price(exchange, symbol):
+def fetch_price(exchange, symbol, asset=None):
     try:
         if exchange == "binance":
             data = get_json("https://api.binance.com/api/v3/ticker/price?symbol=" + symbol)
@@ -60,11 +69,22 @@ def fetch_price(exchange, symbol):
         elif exchange == "okx":
             data = get_json("https://www.okx.com/api/v5/market/ticker?instId=" + symbol)
             price = float(data["data"][0]["last"])
-        else:
+        elif exchange == "bybit":
             data = get_json("https://api.bybit.com/v5/market/tickers?category=spot&symbol=" + symbol)
             if data.get("retCode") != 0:
                 raise ValueError(data.get("retMsg", "API error"))
             price = float(data["result"]["list"][0]["lastPrice"])
+        else:
+            pair = KRAKEN_PAIRS.get(asset or "")
+            if not pair:
+                raise ValueError("Coppia USD non configurata su Kraken")
+            data = get_json("https://api.kraken.com/0/public/Ticker?pair=" + pair)
+            if data.get("error"):
+                raise ValueError("; ".join(data["error"]))
+            result = data.get("result") or {}
+            if not result:
+                raise ValueError("Nessuna coppia restituita da Kraken")
+            price = float(next(iter(result.values()))["c"][0])
         if not price > 0:
             raise ValueError("prezzo non positivo")
         return price
@@ -74,7 +94,7 @@ def fetch_price(exchange, symbol):
 
 def collect_one(task):
     asset, exchange, symbol = task
-    return asset, exchange, fetch_price(exchange, symbol)
+    return asset, exchange, fetch_price(exchange, symbol, asset)
 
 
 def main():
@@ -82,7 +102,10 @@ def main():
     tasks = [
         (asset, exchange, symbols[i])
         for asset, symbols in ASSETS.items()
-        for i, exchange in enumerate(EXCHANGES)
+        for i, exchange in enumerate(EXCHANGES[:4])
+    ] + [
+        (asset, "kraken", KRAKEN_PAIRS.get(asset, ""))
+        for asset in ASSETS
     ]
     quotes = {asset: {} for asset in ASSETS}
     # Chiamate concorrenti: il job orario non deve impiegare minuti per ogni asset.
