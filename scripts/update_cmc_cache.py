@@ -11,6 +11,7 @@ from pathlib import Path
 BASE_KEYLESS = "https://pro-api.coinmarketcap.com/public-api/v3/cryptocurrency/listings/latest"
 BASE_AUTH = "https://pro-api.coinmarketcap.com/v3/cryptocurrency/listings/latest"
 API_KEY = os.environ.get("CMC_API_KEY", "").strip()
+GLOBAL_URL = "https://pro-api.coinmarketcap.com/v1/global-metrics/quotes/latest?convert=USD"
 OUT = Path("data/market/cmc-market.json")
 HEADERS = {"Accept": "application/json", "User-Agent": "FinancePatternEngine/1.0"}
 LIMIT = 100
@@ -37,6 +38,20 @@ def fetch_page(start):
             if attempt < 3:
                 time.sleep(2 ** attempt)
     raise RuntimeError(f"CoinMarketCap start={start}: {last_error}. If the keyless endpoint is blocked, add a repository Actions secret named CMC_API_KEY.")
+
+def fetch_bitcoin_dominance():
+    if not API_KEY:
+        return None
+    req = urllib.request.Request(GLOBAL_URL, headers={**HEADERS, "X-CMC_PRO_API_KEY": API_KEY})
+    try:
+        with urllib.request.urlopen(req, timeout=25) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+        data = payload.get("data") or {}
+        value = data.get("btc_dominance")
+        return float(value) if value is not None else None
+    except Exception as exc:
+        print(f"Warning: global metrics unavailable: {exc}")
+        return None
 
 def main():
     coins = []
@@ -71,11 +86,13 @@ def main():
         })
     if len(normalized) < 250:
         raise RuntimeError(f"Cache incompleta: ricevuti solo {len(normalized)} asset")
+    bitcoin_dominance = fetch_bitcoin_dominance()
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps({
         "updated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "source": "CoinMarketCap API",
         "count": len(normalized),
+        "bitcoin_dominance": bitcoin_dominance,
         "coins": normalized,
     }, ensure_ascii=False, separators=(",", ":")) + "\n", encoding="utf-8")
     print(f"Updated {OUT}: {len(normalized)} assets")
