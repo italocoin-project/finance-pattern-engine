@@ -27,7 +27,7 @@
  <div class="metric"><span>Rank per capitalizzazione</span><strong id="rank">—</strong></div>
 </section>
 <section class="panel"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><h2 style="margin:0">Andamento del prezzo</h2><div id="chartRanges" class="links" aria-label="Intervallo grafico"><button class="range-button" data-days="1">1G</button><button class="range-button active" data-days="7">7G</button><button class="range-button" data-days="30">1M</button><button class="range-button" data-days="365">1A</button><button class="range-button" data-days="max">MAX</button></div></div><svg id="priceChart" class="chart" viewBox="0 0 900 260" role="img" aria-label="Grafico del prezzo degli ultimi sette giorni"><text x="450" y="130" fill="#9eacc5" text-anchor="middle">Caricamento grafico…</text></svg><p id="chartStatus" class="status">Grafico basato sui dati storici pubblici; può essere limitato dai servizi esterni.</p></section>
-<section class="panel"><h2>Informazioni sul progetto</h2><p id="description" class="description">Descrizione non disponibile.</p><div class="links" id="coinLinks"></div><p class="status">Metriche e descrizione: CoinMarketCap Public API. Lo storico del grafico usa CoinGecko, perché lo storico CMC per i mercati spot richiede accessi/endpoint specifici. Le informazioni possono essere incomplete o ritardate. Capitalizzazione = prezzo × supply circolante secondo la fonte; supply e descrizioni possono cambiare. Pagina informativa, non consulenza finanziaria.</p></section>
+<section class="panel"><h2>Informazioni sul progetto</h2><p id="description" class="description">Descrizione non disponibile.</p><div class="links" id="coinLinks"></div><p class="status">Metriche e storico a 7 giorni: CoinMarketCap API. Per gli intervalli diversi da 7 giorni il grafico può usare CoinGecko o Binance come fonte alternativa. Le informazioni possono essere incomplete o ritardate. Capitalizzazione = prezzo × supply circolante secondo la fonte; supply e descrizioni possono cambiare. Pagina informativa, non consulenza finanziaria.</p></section>
 <script>
 const $=id=>document.getElementById(id);
 let currentCoinId='',currentDays='7';
@@ -52,6 +52,7 @@ function drawChart(points){
  el.addEventListener('mousemove',ev=>{const rect=el.getBoundingClientRect(),x=(ev.clientX-rect.left)*900/rect.width;showPoint(Math.round(Math.max(0,Math.min(pts.length-1,(x-left)/(right-left)*(pts.length-1)))))});el.addEventListener('mouseleave',hidePoint);
 }
 async function loadHistoricalChart(coin,id,days){
+ if(days==='7'&&Array.isArray(coin.history_7d)&&coin.history_7d.length>=2)return {prices:coin.history_7d,source:'CoinMarketCap'};
  const cgUrl='https://api.coingecko.com/api/v3/coins/'+encodeURIComponent(id)+'/market_chart?vs_currency=usd&days='+encodeURIComponent(days)+(days==='365'||days==='max'?'&interval=daily':'');
  try{const r=await fetch(cgUrl,{cache:'no-store'});if(r.ok){const d=await r.json();if(Array.isArray(d.prices)&&d.prices.length>=2)return {prices:d.prices,source:'CoinGecko'};}}catch(e){}
  const symbol=String(coin.symbol||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
