@@ -24,6 +24,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v5
       - name: Fetch CoinMarketCap market rankings
+        env:
+          CMC_API_KEY: ${{ secrets.CMC_API_KEY }}
         run: python3 scripts/update_cmc_cache.py
       - name: Commit cache
         run: |
