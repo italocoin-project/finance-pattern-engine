@@ -26,11 +26,11 @@
  <div class="metric"><span>Variazione 30 giorni</span><strong id="low">—</strong></div>
  <div class="metric"><span>Rank per capitalizzazione</span><strong id="rank">—</strong></div>
 </section>
-<section class="panel"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><h2 style="margin:0">Andamento del prezzo</h2><div id="chartRanges" class="links" aria-label="Intervallo grafico"><button class="range-button" data-days="6h">6H</button><button class="range-button" data-days="1">1G</button><button class="range-button active" data-days="7">7G</button><button class="range-button" data-days="30">1M</button><button class="range-button" data-days="365">1A</button><button class="range-button" data-days="max">MAX</button></div></div><svg id="priceChart" class="chart" viewBox="0 0 900 260" role="img" aria-label="Grafico del prezzo del periodo selezionato"><text x="450" y="130" fill="#9eacc5" text-anchor="middle">Caricamento grafico…</text></svg><p id="chartStatus" class="status">Grafico basato sui dati storici pubblici; può essere limitato dai servizi esterni.</p></section>
+<section class="panel"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><h2 style="margin:0">Andamento del prezzo</h2><div id="chartRanges" class="links" aria-label="Intervallo grafico"><button class="range-button active" data-days="6h">6H</button><button class="range-button" data-days="1">1G</button><button class="range-button" data-days="7">7G</button><button class="range-button" data-days="30">1M</button><button class="range-button" data-days="365">1A</button><button class="range-button" data-days="max">MAX</button></div></div><svg id="priceChart" class="chart" viewBox="0 0 900 260" role="img" aria-label="Grafico del prezzo del periodo selezionato"><text x="450" y="130" fill="#9eacc5" text-anchor="middle">Caricamento grafico…</text></svg><p id="chartStatus" class="status">Grafico basato sui dati storici pubblici; può essere limitato dai servizi esterni.</p></section>
 <section class="panel"><h2>Informazioni sul progetto</h2><p id="description" class="description">Descrizione non disponibile.</p><div class="links" id="coinLinks"></div><p class="status">Metriche e storico a 7 giorni: CoinMarketCap API. Per gli intervalli diversi da 7 giorni il grafico può usare CoinGecko o Binance come fonte alternativa. Le informazioni possono essere incomplete o ritardate. Capitalizzazione = prezzo × supply circolante secondo la fonte; supply e descrizioni possono cambiare. Pagina informativa, non consulenza finanziaria.</p></section>
 <script>
 const $=id=>document.getElementById(id);
-let currentCoinId='',currentDays='7';
+let currentCoinId='',currentDays='6h';
 function money(n){if(!Number.isFinite(n))return '—';return new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:n<1?8:2,notation:Math.abs(n)>=1e9?'compact':'standard'}).format(n)}
 function supply(n){return Number.isFinite(n)?new Intl.NumberFormat('en-US',{notation:'compact',maximumFractionDigits:3}).format(n):'—'}
 function safeText(v){return String(v||'').replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim()}
@@ -53,8 +53,13 @@ function drawChart(points){
 }
 async function loadHistoricalChart(coin,id,days){
  if(days==='6h'){
+  const cutoff=Date.now()-6*60*60*1000;
+  if(String(coin.symbol||'').toUpperCase()==='BTC'){
+   const end=new Date().toISOString(),start=new Date(cutoff-60*60*1000).toISOString();
+   try{const r=await fetch('https://api.exchange.coinbase.com/products/BTC-USD/candles?granularity=3600&start='+encodeURIComponent(start)+'&end='+encodeURIComponent(end),{cache:'no-store',headers:{'Accept':'application/json'}});if(r.ok){const rows=await r.json();if(Array.isArray(rows)){const prices=rows.map(row=>[Number(row[0])*1000,Number(row[4])]).filter(p=>p[0]>=cutoff&&Number.isFinite(p[0])&&Number.isFinite(p[1])).sort((a,b)=>a[0]-b[0]);if(prices.length>=2)return {prices,source:'Coinbase'};}}}catch(e){}
+  }
   const shortUrl='https://api.coingecko.com/api/v3/coins/'+encodeURIComponent(id)+'/market_chart?vs_currency=usd&days=1';
-  try{const r=await fetch(shortUrl,{cache:'no-store'});if(r.ok){const d=await r.json();if(Array.isArray(d.prices)&&d.prices.length>=2){const cutoff=Date.now()-6*60*60*1000;let prices=d.prices.filter(p=>Number(p[0])>=cutoff);if(prices.length>=2)return {prices,source:'CoinGecko'};}}}catch(e){}
+  try{const r=await fetch(shortUrl,{cache:'no-store'});if(r.ok){const d=await r.json();if(Array.isArray(d.prices)&&d.prices.length>=2){const prices=d.prices.filter(p=>Number(p[0])>=cutoff);if(prices.length>=2)return {prices,source:'CoinGecko'};}}}catch(e){}
  }
  if(days==='7'&&Array.isArray(coin.history_7d)&&coin.history_7d.length>=2)return {prices:coin.history_7d,source:'CoinMarketCap'};
  const cgDays=days==='6h'?'1':days;
