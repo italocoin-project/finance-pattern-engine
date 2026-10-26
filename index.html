@@ -101,12 +101,12 @@ button:focus-visible,a:focus-visible,select:focus-visible,input:focus-visible{ou
  <div class="grid" style="margin-bottom:10px">
   <div class="card"><div class="label">Prima quotazione del periodo</div><div id="historyFirst" class="metric">—</div><p id="historyFirstTime">—</p></div>
   <div class="card"><div class="label">Ultima quotazione salvata</div><div id="historyLast" class="metric">—</div><p id="historyLastTime">—</p></div>
-  <div class="card"><div class="label">Variazione nel periodo</div><div id="historyChange" class="metric">—</div><p>Basata sui campioni orari disponibili</p></div>
+  <div class="card"><div class="label">Variazione nel periodo</div><div id="historyChange" class="metric">—</div><p>Basata sui campioni salvati disponibili</p></div>
   <div class="card"><div class="label">Campioni salvati</div><div id="historyCount" class="metric">0</div><p>Non sono dati tick-by-tick</p></div>
  </div>
  <div class="card" style="padding:12px;margin:0 0 14px"><h3 class="section-title" style="margin:4px 8px 0">Andamento dello storico selezionato</h3><svg id="savedHistoryChart" viewBox="0 0 720 230" role="img" aria-label="Grafico delle quotazioni archiviate"><text x="360" y="110" fill="#9caac4" text-anchor="middle">Caricamento dei campioni storici…</text></svg></div>
  <div class="table-wrap"><table><thead><tr><th>Data e ora (UTC)</th><th>Asset</th><th>Exchange</th><th>Prezzo</th><th>Fonte</th></tr></thead><tbody id="historyRows"><tr><td colspan="5" class="empty">Caricamento dello storico pubblico…</td></tr></tbody></table></div>
- <p class="hint">L’archivio viene salvato nel repository circa una volta all’ora tramite GitHub Actions. I periodi brevi mostrano solo i campioni realmente presenti: la raccolta oraria non può ricostruire dati al minuto. Se una fonte non risponde, il campione viene escluso; le date precedenti alla prima raccolta non possono essere ricostruite retroattivamente.</p>
+ <p class="hint">L’archivio viene salvato nel repository circa una volta all’ora tramite GitHub Actions. I periodi brevi mostrano solo i campioni realmente presenti: la frequenza di raccolta non può ricostruire dati al minuto. Se una fonte non risponde, il campione viene escluso; le date precedenti alla prima raccolta non possono essere ricostruite retroattivamente.</p>
 </section>
 
 <section class="card" id="importMovements" style="margin-bottom:14px">
