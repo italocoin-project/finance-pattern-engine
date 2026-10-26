@@ -44,7 +44,9 @@ jobs:
           Path("/tmp/site.js").write_text("\n".join(scripts), encoding="utf-8")
           PY
           node --check /tmp/site.js
-      - name: Compile Python collector
-        run: python3 -m py_compile scripts/archive_market_data.py
+      - name: Compile Python collector and tests
+        run: python3 -m py_compile scripts/archive_market_data.py scripts/test_archive_market_data.py
+      - name: Run offline collector tests
+        run: python3 -m unittest scripts.test_archive_market_data -v
       - name: Validate sitemap XML
         run: python3 -c "import xml.etree.ElementTree as ET; ET.parse('sitemap.xml')"
