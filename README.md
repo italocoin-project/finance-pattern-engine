@@ -7,7 +7,7 @@ Monitor informativo dei mercati crypto con interfaccia in italiano, confronto tr
 - Repository e archivio dati: https://github.com/italocoin-project/finance-pattern-engine
 
 ## Funzioni
-- Quotazioni spot pubbliche da Binance, Coinbase, OKX, Bybit e Kraken, quando raggiungibili.
+- Monitor live con quotazioni spot pubbliche da Binance, Coinbase, OKX e Bybit, quando raggiungibili; archivio storico con tentativi aggiuntivi tramite Kraken.
 - Monitor di 30 asset e confronto indicativo tra prezzi.
 - Grafico Binance a candele orarie selezionabili da 1 a 24 ore.
 - Archivio di campioni orari in `data/market/YYYY-MM-DD.jsonl`, raccolti tramite GitHub Actions.
