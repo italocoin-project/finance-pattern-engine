@@ -224,7 +224,7 @@ $('periodMode').addEventListener('change',drawPeriodComparison);$('saveBudgets')
 render();
 
 const FAVORITES_KEY='fpe-market-favorites-v1';
-const coinIds={BTC:'bitcoin',ETH:'ethereum',BNB:'binancecoin',SOL:'solana',XRP:'ripple',ADA:'cardano',DOGE:'dogecoin',TRX:'tron',TON:'the-open-network',AVAX:'avalanche-2',LINK:'chainlink',DOT:'polkadot',LTC:'litecoin',BCH:'bitcoin-cash',XLM:'stellar',UNI:'uniswap',AAVE:'aave',NEAR:'near',ETC:'ethereum-classic',FIL:'filecoin',ICP:'internet-computer',ATOM:'cosmos',ARB:'arbitrum',OP:'optimism',SUI:'sui',SHIB:'shiba-inu',PEPE:'pepe',INJ:'injective-protocol',SEI:'sei-network',HBAR:'hedera-hashgraph'};
+const coinIds={BTC:'bitcoin',ETH:'ethereum',BNB:'BNB',SOL:'solana',XRP:'ripple',ADA:'cardano',DOGE:'dogecoin',TRX:'tron',TON:'the-open-network',AVAX:'avalanche-2',LINK:'chainlink',DOT:'polkadot',LTC:'litecoin',BCH:'bitcoin-cash',XLM:'stellar',UNI:'uniswap',AAVE:'aave',NEAR:'near',ETC:'ethereum-classic',FIL:'filecoin',ICP:'internet-computer',ATOM:'cosmos',ARB:'arbitrum',OP:'optimism',SUI:'sui',SHIB:'shiba-inu',PEPE:'pepe',INJ:'injective-protocol',SEI:'sei-network',HBAR:'hedera-hashgraph'};
 let overviewRows=[],overviewLoading=false,marketMetadata={};
 function readMarketFavorites(){try{const x=JSON.parse(localStorage.getItem(FAVORITES_KEY)||'[]');return Array.isArray(x)?x:[]}catch(e){return[]}}
 function writeMarketFavorites(items){try{localStorage.setItem(FAVORITES_KEY,JSON.stringify(items))}catch(e){}}
