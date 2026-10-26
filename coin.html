@@ -64,7 +64,7 @@ async function loadHistoricalChart(coin,id,days){
  if(days==='7'&&Array.isArray(coin.history_7d)&&coin.history_7d.length>=2)return {prices:coin.history_7d,source:'CoinMarketCap'};
  const cgDays=days==='6h'?'1':days;
  const cgUrl='https://api.coingecko.com/api/v3/coins/'+encodeURIComponent(id)+'/market_chart?vs_currency=usd&days='+encodeURIComponent(cgDays)+(cgDays==='365'||cgDays==='max'?'&interval=daily':'');
- try{const r=await fetch(cgUrl,{cache:'no-store'});if(r.ok){const d=await r.json();if(Array.isArray(d.prices)&&d.prices.length>=2)return {prices:d.prices,source:'CoinGecko'};}}catch(e){}
+ try{const r=await fetch(cgUrl,{cache:'no-store'});if(r.ok){const d=await r.json();if(Array.isArray(d.prices)&&d.prices.length>=2){const prices=days==='6h'?d.prices.filter(p=>Number(p[0])>=Date.now()-6*60*60*1000):d.prices;if(prices.length>=2)return {prices,source:'CoinGecko'};}}}catch(e){}
  const symbol=String(coin.symbol||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
  const interval=days==='1'?'15m':days==='7'?'1h':days==='30'?'4h':'1d';
  const limit=days==='1'?96:days==='7'?168:days==='30'?180:days==='365'?365:1000;
