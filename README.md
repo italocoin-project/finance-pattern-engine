@@ -7,7 +7,7 @@ Monitor informativo dei mercati crypto con interfaccia in italiano, confronto tr
 - Repository e archivio dati: https://github.com/italocoin-project/finance-pattern-engine
 
 ## Funzioni
-- Monitor live con quotazioni spot pubbliche da Binance, Coinbase, OKX e Bybit, quando raggiungibili; archivio storico con tentativi aggiuntivi tramite Kraken.
+- Monitor live con quotazioni spot pubbliche da Binance, Coinbase, OKX e Kraken, quando raggiungibili.
 - Monitor di 30 asset e confronto indicativo tra prezzi.
 - Grafico a candele orarie selezionabili da 1 a 24 ore, con fallback Binance → OKX → Kraken.
 - Archivio di campioni orari in `data/market/YYYY-MM-DD.jsonl`, raccolti tramite GitHub Actions.
@@ -16,7 +16,7 @@ Monitor informativo dei mercati crypto con interfaccia in italiano, confronto tr
 - Guide educative e pagine informative.
 
 ## Raccolta dati
-Il workflow `.github/workflows/archive-market-data.yml` è pianificato ogni ora. Il programma `scripts/archive_market_data.py` interroga endpoint pubblici per 30 asset e cinque exchange, salva il timestamp UTC e registra gli errori per le fonti non raggiungibili. Non inventa quotazioni mancanti. Alcuni endpoint possono restituire errori HTTP in base alla regione, alle restrizioni dell'exchange o alle regole anti-bot.
+Il workflow `.github/workflows/archive-market-data.yml` è pianificato ogni ora. Il programma `scripts/archive_market_data.py` interroga endpoint pubblici per 30 asset e quattro exchange, salva il timestamp UTC e registra gli errori per le fonti non raggiungibili. Non inventa quotazioni mancanti. Alcuni endpoint possono restituire errori HTTP in base alla regione, alle restrizioni dell'exchange o alle regole anti-bot.
 
 L'archivio inizia dalla prima raccolta riuscita: non è possibile ricostruire retroattivamente campioni non registrati. I campioni orari non equivalgono a tick-by-tick e non sono transazioni blockchain.
 
