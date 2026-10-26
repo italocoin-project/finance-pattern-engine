@@ -135,10 +135,10 @@ async function loadSavedMarketHistory(){
  try{
   const response=await fetch(archiveApi+'?ref=main',{cache:'no-store'});
   if(!response.ok)throw new Error('GitHub API HTTP '+response.status);
-  const files=await response.json(),jsonl=files.filter(f=>f.type==='file'&&/^\\d{4}-\\d{2}-\\d{2}\\.jsonl$/.test(f.name)).sort((a,b)=>a.name.localeCompare(b.name));
+  const files=await response.json(),jsonl=files.filter(f=>f.type==='file'&&f.name.length===16&&f.name.endsWith('.jsonl')&&Date.parse(f.name.slice(0,10)+'T00:00:00Z')).sort((a,b)=>a.name.localeCompare(b.name));
   const mode=$('historyPeriod').value,start=historyPeriodStart(mode),eligible=jsonl.filter(f=>mode==='all'||Date.parse(f.name.slice(0,10)+'T23:59:59Z')>=start.getTime());
   const chosen=eligible.slice(-370);
-  const batches=await Promise.allSettled(chosen.map(async file=>{const res=await fetch(file.download_url,{cache:'no-store'});if(!res.ok)throw new Error('HTTP '+res.status);const text=await res.text();return text.split(/\\r?\\n/).filter(Boolean).map(line=>JSON.parse(line))}));
+  const batches=await Promise.allSettled(chosen.map(async file=>{const res=await fetch(file.download_url,{cache:'no-store'});if(!res.ok)throw new Error('HTTP '+res.status);const text=await res.text();return text.split(String.fromCharCode(10)).map(line=>line.replaceAll(String.fromCharCode(13),'')).filter(Boolean).map(line=>JSON.parse(line))}));
   savedMarketRecords=batches.filter(x=>x.status==='fulfilled').flatMap(x=>x.value).filter(r=>r&&r.timestamp_utc&&r.quotes);
   savedMarketRecords.sort((a,b)=>Date.parse(a.timestamp_utc)-Date.parse(b.timestamp_utc));
   renderSavedMarketHistory();
