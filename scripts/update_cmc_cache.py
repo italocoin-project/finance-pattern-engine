@@ -5,6 +5,7 @@ import os
 import time
 import urllib.error
 import urllib.request
+import urllib.parse
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -70,6 +71,7 @@ def main():
             quote = {}
         normalized.append({
             "id": c.get("slug"),
+            "cmc_id": c.get("id"),
             "name": c.get("name"),
             "symbol": c.get("symbol"),
             "rank": c.get("cmc_rank"),
@@ -86,6 +88,71 @@ def main():
         })
     if len(normalized) < 250:
         raise RuntimeError(f"Cache incompleta: ricevuti solo {len(normalized)} asset")
+    # Fetch 7 daily historical price points for the cached assets once per UTC day.
+    # Reuse the existing cache on subsequent 30-minute refreshes to control API credits.
+    today = datetime.now(timezone.utc).date().isoformat()
+    previous = {}
+    try:
+        previous_payload = json.loads(OUT.read_text(encoding="utf-8"))
+        previous = {str(c.get("id")): c for c in previous_payload.get("coins", [])}
+    except (OSError, ValueError, TypeError):
+        previous = {}
+    if API_KEY:
+        stale = [c for c in normalized if not (
+            previous.get(str(c.get("id")), {}).get("history_date") == today
+            and len(previous.get(str(c.get("id")), {}).get("history_7d", [])) >= 2
+        )]
+        ids = [str(c["cmc_id"]) for c in stale if c.get("cmc_id") is not None]
+        if ids:
+            params = urllib.parse.urlencode({
+                "id": ",".join(ids), "count": "7", "interval": "1d", "convert": "USD"
+            })
+            req = urllib.request.Request(
+                "https://pro-api.coinmarketcap.com/v3/cryptocurrency/quotes/historical?" + params,
+                headers={**HEADERS, "X-CMC_PRO_API_KEY": API_KEY}
+            )
+            try:
+                with urllib.request.urlopen(req, timeout=45) as response:
+                    historical = json.loads(response.read().decode("utf-8"))
+                status = historical.get("status") or {}
+                if status.get("error_code", 0) != 0:
+                    raise RuntimeError(status.get("error_message") or "CoinMarketCap historical API error")
+                history_data = historical.get("data") or {}
+                for c in stale:
+                    key = str(c.get("cmc_id"))
+                    record = history_data.get(key) or {}
+                    quotes = record.get("quotes") or []
+                    prices = []
+                    for item in quotes:
+                        quote = ((item.get("quote") or {}).get("USD") or {})
+                        try:
+                            stamp = datetime.fromisoformat(item["timestamp"].replace("Z", "+00:00")).timestamp() * 1000
+                            price = float(quote["price"])
+                            prices.append([int(stamp), price])
+                        except (KeyError, TypeError, ValueError):
+                            continue
+                    if len(prices) >= 2:
+                        c["history_7d"] = prices
+                        c["history_date"] = today
+                    else:
+                        old = previous.get(str(c.get("id")), {})
+                        if old.get("history_7d"):
+                            c["history_7d"] = old["history_7d"]
+                            c["history_date"] = old.get("history_date")
+                print(f"CoinMarketCap historical quotes: {sum(1 for c in normalized if c.get('history_7d'))}/{len(normalized)} assets cached")
+            except Exception as exc:
+                print(f"Warning: historical quotes unavailable; preserving previous history where possible: {exc}")
+                for c in normalized:
+                    old = previous.get(str(c.get("id")), {})
+                    if old.get("history_7d"):
+                        c["history_7d"] = old["history_7d"]
+                        c["history_date"] = old.get("history_date")
+    else:
+        for c in normalized:
+            old = previous.get(str(c.get("id")), {})
+            if old.get("history_7d"):
+                c["history_7d"] = old["history_7d"]
+                c["history_date"] = old.get("history_date")
     bitcoin_dominance = fetch_bitcoin_dominance()
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps({
