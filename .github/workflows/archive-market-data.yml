@@ -1,6 +1,10 @@
 name: Archive public exchange market data
 
 on:
+  push:
+    paths:
+      - ".github/workflows/archive-market-data.yml"
+      - "scripts/archive_market_data.py"
   schedule:
     - cron: "*/5 * * * *"
   workflow_dispatch:
