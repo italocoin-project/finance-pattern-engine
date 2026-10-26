@@ -1,0 +1,57 @@
+name: Verify CoinMarketCap historical API access
+
+on:
+  push:
+    paths:
+      - ".github/workflows/test-cmc-historical.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test-historical:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Test historical quotes endpoint without exposing the API key
+        env:
+          CMC_API_KEY: ${{ secrets.CMC_API_KEY }}
+        run: |
+          python3 - <<'PY'
+          import json, os, urllib.parse, urllib.request, urllib.error
+          key = os.environ.get("CMC_API_KEY", "").strip()
+          if not key:
+              raise SystemExit("FAIL: repository secret CMC_API_KEY is missing or empty")
+          params = urllib.parse.urlencode({"id": "1", "count": "7", "interval": "1d", "convert": "USD"})
+          req = urllib.request.Request(
+              "https://pro-api.coinmarketcap.com/v3/cryptocurrency/quotes/historical?" + params,
+              headers={"X-CMC_PRO_API_KEY": key, "Accept": "application/json", "User-Agent": "FinancePatternEngine/1.0"}
+          )
+          try:
+              with urllib.request.urlopen(req, timeout=25) as response:
+                  payload = json.loads(response.read().decode("utf-8"))
+          except urllib.error.HTTPError as e:
+              body = e.read().decode("utf-8", "replace")
+              try:
+                  data = json.loads(body)
+                  status = data.get("status", {})
+                  print("CoinMarketCap HTTP", e.code, "| error_code:", status.get("error_code"), "| error:", status.get("error_message"))
+              except Exception:
+                  print("CoinMarketCap HTTP", e.code, "| response body omitted")
+              raise SystemExit(1)
+          status = payload.get("status") or {}
+          if status.get("error_code", 0) != 0:
+              print("CoinMarketCap rejected request:", status.get("error_code"), status.get("error_message"))
+              raise SystemExit(1)
+          data = payload.get("data") or {}
+          btc = data.get("1") or data.get(1) or {}
+          quotes = btc.get("quotes") or []
+          if not quotes:
+              print("FAIL: endpoint responded successfully but returned no historical quotes")
+              raise SystemExit(1)
+          print("PASS: CoinMarketCap historical endpoint authorized.")
+          print("Asset:", btc.get("name", "Bitcoin"), "| quote points:", len(quotes))
+          print("First point:", quotes[0].get("timestamp"), "| last point:", quotes[-1].get("timestamp"))
+          print("API key is not printed.")
+          PY
