@@ -305,12 +305,44 @@ async function getJson(url){const res=await fetch(url,{cache:'no-store'});if(!re
 function setText(id,v){const e=$(id);if(e)e.textContent=v}
 function drawMarketChart(candles){const svg=$('marketChart');if(!candles||candles.length<2){svg.innerHTML='<text x="360" y="110" fill="#9caac4" text-anchor="middle">Dati storici non disponibili</text>';return}const values=candles.map(k=>num(k.close)),valid=values.every(Number.isFinite);if(!valid){svg.innerHTML='<text x="360" y="110" fill="#9caac4" text-anchor="middle">Dati storici non validi</text>';return}const min=Math.min(...values),max=Math.max(...values),range=max-min||Math.max(Math.abs(max)*0.001,1),first=values[0],last=values[values.length-1],change=first?(last-first)/first*100:NaN;const left=42,right=696,top=34,bottom=174,pts=values.map((v,i)=>({x:left+i*(right-left)/(values.length-1),y:bottom-(v-min)/range*(bottom-top)}));const path=pts.map((p,i)=>(i?'L':'M')+p.x.toFixed(1)+' '+p.y.toFixed(1)).join(' ');const start=Number(candles[0].time),end=Number(candles[candles.length-1].time),fmt=t=>Number.isFinite(t)?new Date(t).toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'}):'—';svg.innerHTML='<line x1="'+left+'" y1="'+bottom+'" x2="'+right+'" y2="'+bottom+'" stroke="#52637e"/><line x1="'+left+'" y1="'+top+'" x2="'+right+'" y2="'+top+'" stroke="#263650" stroke-dasharray="4 5"/><path d="'+path+'" fill="none" stroke="#79e0c3" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/><circle cx="'+pts[pts.length-1].x.toFixed(1)+'" cy="'+pts[pts.length-1].y.toFixed(1)+'" r="4" fill="#79e0c3"/><text x="'+left+'" y="20" fill="#9caac4" font-size="12">Max '+esc(money(max))+'</text><text x="'+right+'" y="20" fill="#9caac4" font-size="12" text-anchor="end">Min '+esc(money(min))+'</text><text x="'+left+'" y="198" fill="#9caac4" font-size="12">'+esc(fmt(start))+'</text><text x="'+right+'" y="198" fill="#9caac4" font-size="12" text-anchor="end">'+esc(fmt(end))+'</text><text x="360" y="218" fill="'+(change>=0?'#79e0c3':'#ff9b9b')+'" font-size="13" text-anchor="middle">Variazione periodo: '+esc(pct(change))+'</text>'}
 let savedMarketRecords=[],historyLoading=false;
+let liveHistoryRecords=[];
 const archiveApi='https://api.github.com/repos/italocoin-project/finance-pattern-engine/contents/data/market';
 function historyPeriodStart(mode,now=new Date()){const start=new Date(now);if(/^\d+h$/.test(mode)){start.setTime(now.getTime()-Number(mode.slice(0,-1))*3600000);return start}if(mode==='week'){start.setTime(now.getTime()-7*86400000);return start}if(mode==='month'){start.setTime(now.getTime()-30*86400000);return start}if(mode==='90d'){start.setTime(now.getTime()-90*86400000);return start}if(mode==='year'){start.setTime(now.getTime()-365*86400000);return start}return new Date(0)}
 function historyPrice(record,asset,exchange){const v=record&&record.quotes&&record.quotes[asset]&&record.quotes[asset][exchange];return typeof v==='number'&&Number.isFinite(v)&&v>0?v:null}
+async function fetchLiveExchangeHistory(asset,exchange,mode){
+ if(!/^\\d+h$/.test(mode))return [];
+ const hours=Number(mode.slice(0,-1));if(!Number.isFinite(hours)||hours<1||hours>24)return [];
+ const now=Date.now(),since=now-hours*3600000,assetUpper=String(asset).toUpperCase();
+ const krakenPairs={BTC:'XBTUSD',ETH:'ETHUSD',BNB:'BNBUSD',SOL:'SOLUSD',XRP:'XRPUSD',ADA:'ADAUSD',DOGE:'DOGEUSD',TRX:'TRXUSD',AVAX:'AVAXUSD',LINK:'LINKUSD',DOT:'DOTUSD',LTC:'LTCUSD',BCH:'BCHUSD',XLM:'XLMUSD',UNI:'UNIUSD',AAVE:'AAVEUSD',NEAR:'NEARUSD',ETC:'ETCUSD',FIL:'FILUSD',ICP:'ICPUSD',ATOM:'ATOMUSD',ARB:'ARBUSD',OP:'OPUSD',SUI:'SUIUSD',SHIB:'SHIBUSD',PEPE:'PEPEUSD',INJ:'INJUSD',SEI:'SEIUSD',HBAR:'HBARUSD'};
+ const products={BTC:'BTC-USD',ETH:'ETH-USD',BNB:'BNB-USD',SOL:'SOL-USD',XRP:'XRP-USD',ADA:'ADA-USD',DOGE:'DOGE-USD',TRX:'TRX-USD',TON:'TON-USD',AVAX:'AVAX-USD',LINK:'LINK-USD',DOT:'DOT-USD',LTC:'LTC-USD',BCH:'BCH-USD',XLM:'XLM-USD',UNI:'UNI-USD',AAVE:'AAVE-USD',NEAR:'NEAR-USD',ETC:'ETC-USD',FIL:'FIL-USD',ICP:'ICP-USD',ATOM:'ATOM-USD',ARB:'ARB-USD',OP:'OP-USD',SUI:'SUI-USD',SHIB:'SHIB-USD',PEPE:'PEPE-USD',INJ:'INJ-USD',SEI:'SEI-USD',HBAR:'HBAR-USD'};
+ const urls=[];
+ if(exchange==='coinbase'){
+  const product=products[assetUpper]||assetUpper+'-USD';
+  urls.push('https://api.exchange.coinbase.com/products/'+encodeURIComponent(product)+'/candles?granularity=60&start='+encodeURIComponent(new Date(since).toISOString())+'&end='+encodeURIComponent(new Date(now).toISOString()));
+ }else if(exchange==='binance'){
+  urls.push('https://api.binance.com/api/v3/klines?symbol='+encodeURIComponent(assetUpper+'USDT')+'&interval=1m&startTime='+since+'&endTime='+now+'&limit=1000');
+ }else if(exchange==='okx'){
+  urls.push('https://www.okx.com/api/v5/market/history-candles?instId='+encodeURIComponent(assetUpper+'-USDT')+'&bar=1m&limit='+Math.min(300,hours*60+5));
+ }else if(exchange==='kraken'){
+  const pair=krakenPairs[assetUpper];if(!pair)return [];
+  urls.push('https://api.kraken.com/0/public/OHLC?pair='+encodeURIComponent(pair)+'&interval=1&since='+Math.floor(since/1000));
+ }
+ for(const url of urls){
+  try{
+   const res=await fetch(url,{cache:'no-store'});if(!res.ok)continue;const body=await res.json();let points=[];
+   if(exchange==='coinbase'&&Array.isArray(body))points=body.map(r=>[Number(r[0])*1000,Number(r[4])]);
+   else if(exchange==='binance'&&Array.isArray(body))points=body.map(r=>[Number(r[0]),Number(r[4])]);
+   else if(exchange==='okx'&&body&&Array.isArray(body.data))points=body.data.map(r=>[Number(r[0]),Number(r[4])]);
+   else if(exchange==='kraken'&&body&&body.result&&!body.error?.length){const key=Object.keys(body.result).find(k=>k!=='last');if(key)points=body.result[key].map(r=>[Number(r[0])*1000,Number(r[4])]);}
+   points=points.filter(p=>Number.isFinite(p[0])&&Number.isFinite(p[1])&&p[1]>0&&p[0]>=since&&p[0]<=now).sort((a,b)=>a[0]-b[0]);
+   if(points.length>=2)return points.map(p=>({timestamp_utc:new Date(p[0]).toISOString(),source:'exchange_api',quotes:{[assetUpper]:{[exchange]:p[1]}}}));
+  }catch(e){/* prova la fonte archivio se l'exchange non è raggiungibile */}
+ }
+ return [];
+}
 function renderSavedMarketHistory(){
  const asset=$('historyAsset').value,exchange=$('historyExchange').value,mode=$('historyPeriod').value,start=historyPeriodStart(mode),now=Date.now();
- const records=savedMarketRecords.filter(r=>{const t=Date.parse(r.timestamp_utc);return Number.isFinite(t)&&t>=start.getTime()&&t<=now&&historyPrice(r,asset,exchange)!==null}).sort((a,b)=>Date.parse(a.timestamp_utc)-Date.parse(b.timestamp_utc));
+ const sourceRecords=savedMarketRecords.concat(liveHistoryRecords);const records=sourceRecords.filter(r=>{const t=Date.parse(r.timestamp_utc);return Number.isFinite(t)&&t>=start.getTime()&&t<=now&&historyPrice(r,asset,exchange)!==null}).sort((a,b)=>Date.parse(a.timestamp_utc)-Date.parse(b.timestamp_utc));
  const first=records[0],last=records[records.length-1],price=r=>historyPrice(r,asset,exchange),time=r=>new Date(r.timestamp_utc).toLocaleString('it-IT',{timeZone:'UTC'})+' UTC';
  setText('historyFirst',first?money(price(first),'USD'):'—');setText('historyFirstTime',first?time(first):'Nessuna quotazione nel periodo');
  setText('historyLast',last?money(price(last),'USD'):'—');setText('historyLastTime',last?time(last):'—');
@@ -326,7 +358,7 @@ function renderSavedMarketHistory(){
  const change=first&&last&&price(first)!==0?(price(last)-price(first))/price(first)*100:NaN;
  setText('historyChange',Number.isFinite(change)?pct(change):'—');setText('historyCount',String(records.length));
  $('historyRows').innerHTML=records.length?records.slice().reverse().slice(0,168).map(r=>'<tr><td>'+esc(time(r))+'</td><td>'+esc(asset)+'</td><td>'+esc(exchange.charAt(0).toUpperCase()+exchange.slice(1))+'</td><td>'+money(price(r),'USD')+'</td><td>Archivio GitHub Actions</td></tr>').join(''):'<tr><td colspan="5" class="empty">Nessuna quotazione reale salvata per questo asset, exchange e periodo. L’archivio non inventa valori mancanti.</td></tr>';
- setText('historyStatus',records.length+' campioni reali · '+(savedMarketRecords.length?'archivio caricato':'nessun archivio disponibile'));
+ setText('historyStatus',records.length+' campioni reali · '+(records.some(r=>r.source==='exchange_api')?(exchange.charAt(0).toUpperCase()+exchange.slice(1)+' · dati storici API'):(savedMarketRecords.length?'archivio caricato':'nessun archivio disponibile')));
 }
 async function loadSavedMarketHistory(){
  if(historyLoading)return;historyLoading=true;setText('historyStatus','Lettura archivio GitHub…');
@@ -347,13 +379,14 @@ async function loadSavedMarketHistory(){
   savedMarketRecords=batches.filter(x=>x.status==='fulfilled').flatMap(x=>x.value).filter(r=>r&&r.timestamp_utc&&r.quotes);
   savedMarketRecords.sort((a,b)=>Date.parse(a.timestamp_utc)-Date.parse(b.timestamp_utc));
   renderSavedMarketHistory();
+  await refreshHistorySelection();
   if(!savedMarketRecords.length)setText('historyStatus','Archivio vuoto o non ancora disponibile');
   else if(failed)setText('historyStatus',savedMarketRecords.length+' campioni caricati · '+failed+' file non disponibili');
  }catch(e){setText('historyStatus','Archivio non raggiungibile');$('historyRows').innerHTML='<tr><td colspan="5" class="empty">Non riesco a leggere l’archivio GitHub in questo momento. Riprova con “Aggiorna storico”.</td></tr>';}
  finally{historyLoading=false}
 }
-['historyAsset','historyExchange','historyPeriod'].forEach(id=>$(id).addEventListener('change',()=>{if(id==='historyPeriod')loadSavedMarketHistory();else renderSavedMarketHistory()}));
-$('historyRefresh').addEventListener('click',loadSavedMarketHistory);
+async function refreshHistorySelection(){liveHistoryRecords=[];renderSavedMarketHistory();const asset=$('historyAsset').value,exchange=$('historyExchange').value,mode=$('historyPeriod').value;const start=historyPeriodStart(mode),cached=savedMarketRecords.filter(r=>{const t=Date.parse(r.timestamp_utc);return Number.isFinite(t)&&t>=start.getTime()&&t<=Date.now()&&historyPrice(r,asset,exchange)!==null});if(cached.length>=2)return;setText('historyStatus','Nessun campione salvato sufficiente: richiesta candele storiche a '+exchange+'…');liveHistoryRecords=await fetchLiveExchangeHistory(asset,exchange,mode);renderSavedMarketHistory();if(!liveHistoryRecords.length&&cached.length<2)setText('historyStatus','Nessun campione nel periodo; la fonte exchange non ha restituito candele. Prova 24 ore o 7 giorni.');}\n['historyAsset','historyExchange','historyPeriod'].forEach(id=>$(id).addEventListener('change',()=>{if(id==='historyPeriod')loadSavedMarketHistory().then(refreshHistorySelection);else refreshHistorySelection()}));
+$('historyRefresh').addEventListener('click',()=>loadSavedMarketHistory().then(refreshHistorySelection));
 function initMarketAssets(){const select=$('marketAsset');select.innerHTML=Object.entries(marketAssets).map(([symbol,a])=>'<option value="'+symbol+'">'+esc(a.name)+' ('+symbol+')</option>').join('');}
 function num(v){const n=Number(v);return Number.isFinite(n)?n:NaN}
 let marketLoading=false;
