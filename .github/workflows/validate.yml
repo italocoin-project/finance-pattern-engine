@@ -20,55 +20,30 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "22"
-      - name: Extract inline JavaScript
+      - name: Extract all inline JavaScript
         run: |
           python3 - <<'PY'
           import re
           from pathlib import Path
 
-          for source, target in (("index.html", "/tmp/site.js"), ("markets.html", "/tmp/markets.js")):
-              html = Path(source).read_text(encoding="utf-8")
+          for index, page in enumerate(sorted(Path(".").rglob("*.html"))):
+              html = page.read_text(encoding="utf-8")
               scripts = re.findall(r"<script(?:\s[^>]*)?>(.*?)</script>", html, re.S)
               scripts = [script for script in scripts if script.strip()]
-              if not scripts:
-                  raise SystemExit(f"No inline JavaScript found in {source}")
-              Path(target).write_text("\n".join(scripts), encoding="utf-8")
-
-          html = Path("index.html").read_text(encoding="utf-8")
-          assets_block = re.search(r"const marketAssets=\{(.*?)\n\};", html, re.S)
-          kraken_block = re.search(r"const krakenPairs=\{(.*?)\};", html, re.S)
-          if not assets_block or not kraken_block:
-              raise SystemExit("Market asset or Kraken mapping missing")
-          assets = set(re.findall(r"^\s*([A-Z0-9]+):\{", assets_block.group(1), re.M))
-          kraken_assets = set(re.findall(r"([A-Z0-9]+)\s*:", kraken_block.group(1)))
-          if len(assets) != 30:
-              raise SystemExit(f"Expected 30 market assets, found {len(assets)}")
-          if assets != kraken_assets:
-              raise SystemExit(f"Kraken mapping mismatch: missing={sorted(assets-kraken_assets)}, extra={sorted(kraken_assets-assets)}")
-          if 'value="kraken"' not in html:
-              raise SystemExit("Kraken history filter missing")
-          if 'id="exchangeHealth"' not in html or "'is-ok'" not in html or "'is-down'" not in html:
-              raise SystemExit("Exchange health UI missing")
-          if 'rel="canonical"' not in html or 'property="og:title"' not in html:
-              raise SystemExit("SEO canonical or Open Graph metadata missing")
-
-          markets = Path("markets.html").read_text(encoding="utf-8")
-          for marker in ("const visible=list.slice((page-1)*perPage,page*perPage)", "pageCount=Math.max(1,Math.ceil(list.length/perPage))"):
-              if marker not in markets:
-                  raise SystemExit(f"Market ranking pagination check failed: {marker}")
-
-          for page in Path(".").rglob("*.html"):
-              source = page.read_text(encoding="utf-8")
-              if "adsbygoogle.js" in source or 'class="adsense-slot"' in source:
-                  raise SystemExit(f"Ad scripts must remain disabled until privacy and consent setup is complete: {page}")
+              if scripts:
+                  Path(f"/tmp/site-{index}.js").write_text("\n".join(scripts), encoding="utf-8")
           PY
-      - name: Check index JavaScript syntax
-        run: node --check /tmp/site.js
-      - name: Check markets JavaScript syntax
-        run: node --check /tmp/markets.js
-      - name: Compile Python collector and tests
-        run: python3 -m py_compile scripts/archive_market_data.py scripts/test_archive_market_data.py scripts/update_cmc_cache.py
+      - name: Check all JavaScript syntax
+        run: |
+          for script in /tmp/site-*.js; do
+            node --check "$script"
+          done
+          node --check sw.js
+      - name: Compile Python collector, audit and tests
+        run: python3 -m py_compile scripts/archive_market_data.py scripts/test_archive_market_data.py scripts/update_cmc_cache.py scripts/site_audit.py
       - name: Run offline collector tests
         run: python3 -m unittest scripts.test_archive_market_data -v
+      - name: Run 100-check site audit
+        run: python3 scripts/site_audit.py
       - name: Validate sitemap XML
         run: python3 -c "import xml.etree.ElementTree as ET; ET.parse('sitemap.xml')"
