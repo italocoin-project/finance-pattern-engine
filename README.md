@@ -39,4 +39,4 @@ L'archivio inizia dalla prima raccolta riuscita: non è possibile ricostruire re
 - Gli endpoint pubblici possono essere bloccati o limitati in base alla regione; in questi casi il dato viene segnalato come non disponibile e non sostituito con una quotazione inventata.
 
 ## Pubblicità
-Prima di attivare Google AdSense, il gestore deve completare l'informativa privacy, inserire i dati reali del titolare e implementare i consensi/cookie richiesti per i visitatori interessati. Non sono stati inventati ID publisher o contatti.
+L'account publisher e il file `ads.txt` sono predisposti nel repository, ma gli script AdSense non vengono caricati sulle pagine pubbliche. La visualizzazione degli annunci resta sospesa finché il gestore non completa i dati del titolare nell'informativa privacy e la configurazione del sistema di consenso applicabile. Non sono stati inventati contatti o dati identificativi.
