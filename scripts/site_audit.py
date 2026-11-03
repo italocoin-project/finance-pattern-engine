@@ -69,7 +69,7 @@ market_block = market_map.group(1)
 # 30 cross-project checks: every tracked asset exists in both live UI and archive collector.
 for symbol in ASSET_NAMES:
     add(f"asset {symbol}: live UI and archive mappings agree", lambda s=symbol: require(
-        re.search(rf"^\s*{re.escape(s)}\s*:", archive_block, re.M)
+        re.search(rf"^\s*['"]?{re.escape(s)}['"]?\s*:", archive_block, re.M)
         and re.search(rf"^\s*{re.escape(s)}\s*:", market_block, re.M),
         f"{s} missing from one or both market mappings"))
 
