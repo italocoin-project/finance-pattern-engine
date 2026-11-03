@@ -397,7 +397,7 @@ async function loadSavedMarketHistory(){
  finally{if(token===historyLoadToken){historyLoading=false;historyLoadController=null}}
 }
 async function refreshHistorySelection(){liveHistoryRecords=[];renderSavedMarketHistory();const asset=$('historyAsset').value,exchange=$('historyExchange').value,mode=$('historyPeriod').value;const start=historyPeriodStart(mode),cached=savedMarketRecords.filter(r=>{const t=Date.parse(r.timestamp_utc);return Number.isFinite(t)&&t>=start.getTime()&&t<=Date.now()&&historyPrice(r,asset,exchange)!==null});if(cached.length>=2)return;setText('historyStatus','Nessun campione salvato sufficiente: richiesta candele storiche a '+exchange+'…');liveHistoryRecords=await fetchLiveExchangeHistory(asset,exchange,mode);renderSavedMarketHistory();if(!liveHistoryRecords.length&&cached.length<2)setText('historyStatus','Nessun campione nel periodo; la fonte exchange non ha restituito candele. Prova 24 ore o 7 giorni.');}
-$('historyAsset').addEventListener('change',loadSavedMarketHistory);$('historyExchange').addEventListener('change',refreshHistorySelection);$('historyPeriod').addEventListener('change',()=>{renderSavedMarketHistory();refreshHistorySelection()});
+$('historyAsset').addEventListener('change',loadSavedMarketHistory);$('historyExchange').addEventListener('change',refreshHistorySelection);$('historyPeriod').addEventListener('change',loadSavedMarketHistory);
 $('historyRefresh').addEventListener('click',()=>loadSavedMarketHistory().then(refreshHistorySelection));
 function initMarketAssets(){const select=$('marketAsset');select.innerHTML=Object.entries(marketAssets).map(([symbol,a])=>'<option value="'+symbol+'">'+esc(a.name)+' ('+symbol+')</option>').join('');}
 function num(v){const n=Number(v);return Number.isFinite(n)?n:NaN}
