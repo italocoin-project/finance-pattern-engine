@@ -13,7 +13,7 @@ Monitor informativo dei mercati crypto con interfaccia in italiano, confronto tr
 - Classifica globale CoinMarketCap consultabile a pagine fino alle prime 300 criptovalute (`markets.html`), con ricerca, ordinamento, prezzo, variazioni 24h/7g, volume e supply.
 - Schede crypto (`coin.html?id=...`) con metriche fondamentali, descrizione, link ufficiali e grafici interattivi su 1 giorno, 7 giorni, 1 mese, 1 anno e storico completo.
 - Grafico a candele orarie selezionabili da 1 a 24 ore, con fallback Binance → OKX → Kraken.
-- Archivio di campioni pubblici pianificato ogni 5 minuti in `data/market/YYYY-MM-DD.jsonl`, raccolti tramite GitHub Actions (l'avvio effettivo può essere ritardato dalla coda di GitHub).
+- Archivio pubblico pianificato ogni 5 minuti in file giornalieri separati per asset (`data/market/pairs/ASSET/YYYY-MM-DD.jsonl`), così la pagina dello storico scarica soltanto i dati della criptovaluta selezionata. GitHub Actions può avviare i cron con ritardo.
 - Filtri storico da 1 a 24 ore, 7 giorni, 30 giorni, 90 giorni, un anno e archivio disponibile.
 - Analisi di file di movimenti importati localmente nel browser; budget e snapshot personali restano locali.
 - Guide educative e pagine informative.
@@ -23,9 +23,9 @@ Monitor informativo dei mercati crypto con interfaccia in italiano, confronto tr
 Le quotazioni e la classifica globale provengono dalla CoinMarketCap Keyless Public API, quando disponibile; i grafici storici delle schede usano l’API pubblica CoinGecko. Le quotazioni exchange provengono dagli endpoint pubblici di Binance. Le API possono applicare limiti di frequenza o non essere disponibili: il sito segnala i dati mancanti invece di inventarli. I valori possono essere aggiornati con ritardo e non sono una garanzia per decisioni finanziarie.
 
 ## Raccolta dati
-Il workflow `.github/workflows/archive-market-data.yml` è pianificato ogni 5 minuti, il minimo pratico scelto per un archivio pubblico aggiornato senza tentare una raccolta tick-by-tick. Il programma `scripts/archive_market_data.py` interroga endpoint pubblici per 30 asset e quattro exchange, salva il timestamp UTC e registra gli errori per le fonti non raggiungibili. Non inventa quotazioni mancanti. Alcuni endpoint possono restituire errori HTTP in base alla regione, alle restrizioni dell'exchange o alle regole anti-bot.
+Il workflow `.github/workflows/archive-market-data.yml` è pianificato ogni 5 minuti, il minimo pratico scelto per un archivio pubblico aggiornato senza tentare una raccolta tick-by-tick. Il programma `scripts/archive_market_data.py` interroga endpoint pubblici per 30 asset e quattro exchange, salva il timestamp UTC e soltanto le quotazioni numeriche valide. Le fonti non raggiungibili sono conteggiate nei log del workflow; non vengono creati prezzi sostitutivi. Alcuni endpoint possono restituire errori HTTP in base alla regione, alle restrizioni dell'exchange o alle regole anti-bot.
 
-L'archivio inizia dalla prima raccolta riuscita: non è possibile ricostruire retroattivamente campioni non registrati. I campioni ogni 5 minuti non equivalgono a tick-by-tick e non sono transazioni blockchain.
+L'archivio inizia dalla prima raccolta riuscita: non è possibile ricostruire retroattivamente campioni non registrati. I campioni ogni 5 minuti non equivalgono a tick-by-tick e non sono transazioni blockchain. I vecchi file giornalieri combinati vengono migrati automaticamente una sola volta nel nuovo archivio per asset.
 
 ## Limiti e sicurezza
 - Le API pubbliche dei prezzi non forniscono movimenti privati degli account Binance/Coinbase.
