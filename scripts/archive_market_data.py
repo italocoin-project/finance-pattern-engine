@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Archive prezzi spot pubblici, senza inventare quotazioni mancanti."""
+"""Archive real public spot prices in compact per-asset daily files."""
 import concurrent.futures
 import datetime as dt
 import json
-import urllib.error
+import math
 import urllib.request
 from pathlib import Path
 
@@ -53,34 +53,28 @@ KRAKEN_PAIRS = {
 
 
 def get_json(url):
-    req = urllib.request.Request(url, headers={"User-Agent": "FinancePatternEngine/1.1"})
+    req = urllib.request.Request(url, headers={"User-Agent": "FinancePatternEngine/1.2"})
     with urllib.request.urlopen(req, timeout=TIMEOUT) as response:
         return json.loads(response.read().decode("utf-8"))
 
 
 def fetch_binance_price(symbol):
-    # Prova in sequenza gli host API ufficiali Binance.
     hosts = (
-        "api.binance.com",
-        "api-gcp.binance.com",
-        "api1.binance.com",
-        "api2.binance.com",
-        "api3.binance.com",
-        "api4.binance.com",
+        "api.binance.com", "api-gcp.binance.com", "api1.binance.com",
+        "api2.binance.com", "api3.binance.com", "api4.binance.com",
         "data-api.binance.vision",
     )
     errors = []
     for host in hosts:
-        url = f"https://{host}/api/v3/ticker/price?symbol={symbol}"
         try:
-            data = get_json(url)
+            data = get_json(f"https://{host}/api/v3/ticker/price?symbol={symbol}")
             price = float(data["price"])
-            if price <= 0:
-                raise ValueError("prezzo non positivo")
+            if not math.isfinite(price) or price <= 0:
+                raise ValueError("prezzo non positivo o non valido")
             return price
         except Exception as exc:
-            errors.append(f"{host}: {str(exc)[:100]}")
-    raise RuntimeError("Tutti gli host Binance hanno fallito: " + " | ".join(errors))
+            errors.append(f"{host}: {str(exc)[:75]}")
+    raise RuntimeError("Host Binance non disponibili: " + " | ".join(errors))
 
 
 def fetch_price(exchange, symbol, asset=None):
@@ -104,52 +98,150 @@ def fetch_price(exchange, symbol, asset=None):
             if not result:
                 raise ValueError("Nessuna coppia restituita da Kraken")
             price = float(next(iter(result.values()))["c"][0])
-        if not price > 0:
-            raise ValueError("prezzo non positivo")
+        if not math.isfinite(price) or price <= 0:
+            raise ValueError("prezzo non positivo o non valido")
         return price
     except Exception as exc:
         return {"error": str(exc)[:180]}
 
 
-def collect_one(task):
-    asset, exchange, symbol = task
-    return asset, exchange, fetch_price(exchange, symbol, asset)
-
-
-def main():
-    now = dt.datetime.now(dt.timezone.utc)
-    tasks = [
-        (asset, exchange, symbols[i])
+def build_tasks():
+    return [
+        (asset, exchange, symbols[index])
         for asset, symbols in ASSETS.items()
-        for i, exchange in enumerate(EXCHANGES[:3])
+        for index, exchange in enumerate(EXCHANGES[:3])
     ] + [
         (asset, "kraken", KRAKEN_PAIRS.get(asset, ""))
         for asset in ASSETS
     ]
+
+
+def _valid_quotes(values):
+    return {
+        exchange: price
+        for exchange, price in (values or {}).items()
+        if isinstance(price, (int, float))
+        and not isinstance(price, bool)
+        and math.isfinite(price)
+        and price > 0
+    }
+
+
+def append_pair_archives(quotes, timestamp, root=Path("data/market")):
+    """Write one compact daily JSONL per asset, so history loads only one asset."""
+    stamp = timestamp.isoformat(timespec="seconds")
+    date = timestamp.strftime("%Y-%m-%d")
+    written = 0
+    for asset, values in quotes.items():
+        valid = _valid_quotes(values)
+        if not valid:
+            continue
+        folder = Path(root) / "pairs" / asset
+        folder.mkdir(parents=True, exist_ok=True)
+        path = folder / f"{date}.jsonl"
+        record = {
+            "timestamp_utc": stamp,
+            "source": "public_spot_ticker_apis",
+            "quotes": {asset: valid},
+        }
+        with path.open("a", encoding="utf-8") as stream:
+            stream.write(json.dumps(record, separators=(",", ":"), ensure_ascii=False) + "\n")
+        written += 1
+    return written
+
+
+def migrate_legacy_archive(root=Path("data/market")):
+    """Migrate old combined daily files once, preserving their original timestamps."""
+    root = Path(root)
+    pairs_root = root / "pairs"
+    marker = pairs_root / ".legacy-migrated.json"
+    if marker.exists():
+        return 0
+    pending = {}
+    for source in sorted(root.glob("????-??-??.jsonl")):
+        date = source.stem
+        try:
+            dt.date.fromisoformat(date)
+        except ValueError:
+            continue
+        for line in source.read_text(encoding="utf-8").splitlines():
+            try:
+                record = json.loads(line)
+            except (json.JSONDecodeError, TypeError):
+                continue
+            stamp = record.get("timestamp_utc")
+            if not stamp:
+                continue
+            for asset, values in (record.get("quotes") or {}).items():
+                if asset not in ASSETS:
+                    continue
+                valid = _valid_quotes(values)
+                if not valid:
+                    continue
+                path = pairs_root / asset / f"{date}.jsonl"
+                pending.setdefault(path, []).append({
+                    "timestamp_utc": stamp,
+                    "source": "legacy_archive_migration",
+                    "quotes": {asset: valid},
+                })
+
+    migrated = 0
+    for path, records in pending.items():
+        path.parent.mkdir(parents=True, exist_ok=True)
+        existing = set()
+        if path.exists():
+            for line in path.read_text(encoding="utf-8").splitlines():
+                try:
+                    existing.add(json.loads(line).get("timestamp_utc"))
+                except (json.JSONDecodeError, TypeError):
+                    continue
+        with path.open("a", encoding="utf-8") as stream:
+            for record in records:
+                if record["timestamp_utc"] in existing:
+                    continue
+                stream.write(json.dumps(record, separators=(",", ":"), ensure_ascii=False) + "\n")
+                existing.add(record["timestamp_utc"])
+                migrated += 1
+
+    pairs_root.mkdir(parents=True, exist_ok=True)
+    marker.write_text(json.dumps({
+        "completed_at_utc": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
+        "records_migrated": migrated,
+    }) + "\n", encoding="utf-8")
+    print(f"Legacy archive migration complete: {migrated} pair records")
+    return migrated
+
+
+def main():
+    now = dt.datetime.now(dt.timezone.utc)
+    migrate_legacy_archive()
     quotes = {asset: {} for asset in ASSETS}
-    # Chiamate concorrenti: il job periodico non deve impiegare minuti per ogni asset.
     with concurrent.futures.ThreadPoolExecutor(max_workers=16) as pool:
-        for asset, exchange, price in pool.map(collect_one, tasks):
+        for asset, exchange, price in pool.map(collect_one, build_tasks()):
             quotes[asset][exchange] = price
 
-    record = {
-        "timestamp_utc": now.isoformat(timespec="seconds"),
-        "source": "public_spot_ticker_apis",
-        "quotes": quotes,
+    written = append_pair_archives(quotes, now)
+    successful = sum(len(_valid_quotes(values)) for values in quotes.values())
+    failures = len(build_tasks()) - successful
+    by_exchange = {
+        exchange: sum(
+            1 for asset_values in quotes.values()
+            if not _valid_quotes({exchange: asset_values.get(exchange)})
+        )
+        for exchange in EXCHANGES
     }
-    outdir = Path("data/market")
-    outdir.mkdir(parents=True, exist_ok=True)
-    path = outdir / (now.strftime("%Y-%m-%d") + ".jsonl")
-    with path.open("a", encoding="utf-8") as stream:
-        stream.write(json.dumps(record, separators=(",", ":"), ensure_ascii=False) + "\n")
-    successful = sum(
-        isinstance(price, (int, float))
-        for asset_quotes in quotes.values()
-        for price in asset_quotes.values()
+    print(
+        f"Archived {now.isoformat(timespec='seconds')}; "
+        f"successful quotes: {successful}/120; failed: {failures}; "
+        f"asset files updated: {written}; failures by exchange: {by_exchange}"
     )
-    print(f"Archived {record['timestamp_utc']}; successful quotes: {successful}/{len(tasks)}; file: {path}")
     if successful == 0:
-        raise SystemExit("No exchange returned a valid price; archive contains diagnostics only.")
+        raise SystemExit("No exchange returned a valid price; no market data was fabricated.")
+
+
+def collect_one(task):
+    asset, exchange, symbol = task
+    return asset, exchange, fetch_price(exchange, symbol, asset)
 
 
 if __name__ == "__main__":
