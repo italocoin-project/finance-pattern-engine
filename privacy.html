@@ -10,6 +10,8 @@
 :root{color-scheme:dark;--bg:#070b16;--panel:#10182a;--line:#293650;--text:#f2f6ff;--muted:#b7c4db;--accent:#71f0cb}
 *{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 8% 0%,rgba(69,110,190,.2),transparent 35%),var(--bg);color:var(--text);font:16px/1.8 system-ui,sans-serif}main{max-width:860px;margin:auto;padding:28px 20px 70px}a{color:var(--accent)}h1{font-size:clamp(32px,6vw,48px);line-height:1.12;letter-spacing:-.04em}h2{margin-top:30px;font-size:21px}p,li{color:var(--muted)}.notice{padding:16px 18px;border:1px solid rgba(255,202,122,.35);border-radius:14px;background:rgba(255,202,122,.07);color:#ffe0aa}.panel{padding:16px 18px;border:1px solid var(--line);border-radius:14px;background:var(--panel)}footer{margin-top:38px;padding-top:20px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
 </style>
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" type="image/svg+xml" href="./assets/fpe-icon.svg">
 </head>
 <body><main>
 <a href="index.html">← Torna a Finance Pattern Engine</a>
@@ -47,4 +49,8 @@
 <p>Non condividere dati di autenticazione, chiavi private o informazioni finanziarie non necessarie. Mantieni aggiornato il browser e usa un dispositivo protetto. Questa informativa deve essere aggiornata quando cambiano le funzioni, i fornitori, le finalità o gli strumenti di tracciamento del sito.</p>
 
 <footer>Finance Pattern Engine · <a href="terms.html">Note legali</a> · <a href="index.html">Monitor mercati</a></footer>
-</main></body></html>
+</main>
+<script>
+if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js',{scope:'./'}).catch(error=>console.warn('Offline mode unavailable:',error)));}
+</script>
+</body></html>
