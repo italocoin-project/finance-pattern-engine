@@ -56,6 +56,11 @@ jobs:
           for marker in ("const visible=list.slice((page-1)*perPage,page*perPage)", "pageCount=Math.max(1,Math.ceil(list.length/perPage))"):
               if marker not in markets:
                   raise SystemExit(f"Market ranking pagination check failed: {marker}")
+
+          for page in Path(".").rglob("*.html"):
+              source = page.read_text(encoding="utf-8")
+              if "adsbygoogle.js" in source or 'class="adsense-slot"' in source:
+                  raise SystemExit(f"Ad scripts must remain disabled until privacy and consent setup is complete: {page}")
           PY
       - name: Check index JavaScript syntax
         run: node --check /tmp/site.js
