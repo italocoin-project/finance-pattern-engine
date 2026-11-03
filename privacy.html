@@ -28,6 +28,7 @@
 
 <h2>2. Dati inseriti e archiviati sul dispositivo</h2>
 <p>Le funzioni facoltative di analisi consentono di importare file di movimenti e di creare budget, preferiti e snapshot. Il codice del sito conserva questi elementi nel local storage del browser sul dispositivo utilizzato. I dati importati, i budget, gli snapshot e i preferiti restano disponibili nello stesso browser finché non vengono cancellati dall'utente o rimossi tramite la pulizia dei dati del sito.</p>
+<p>La web app installabile usa inoltre la Cache Storage del browser tramite un service worker per conservare le pagine statiche e una copia della cache pubblica CoinMarketCap, così da consentire la consultazione offline. Questi elementi memorizzati sono contenuti pubblici del sito, non i file personali importati.</p>
 <p>Il sito non richiede password bancarie, credenziali degli exchange, seed phrase o chiavi private. Non inserire queste informazioni. L'analisi dei movimenti importati viene eseguita localmente nel browser; non caricare i file personali su servizi esterni tramite il sito.</p>
 
 <h2>3. Dati tecnici e servizi esterni</h2>
