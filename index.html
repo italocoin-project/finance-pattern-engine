@@ -374,7 +374,7 @@ async function loadSavedMarketHistory(){
   if(!response.ok)throw new Error('GitHub API HTTP '+response.status);
   const files=await response.json();
   if(!Array.isArray(files))throw new Error('Indice archivio non valido');
-  const jsonl=files.filter(f=>f.type==='file'&&/^\\d{4}-\\d{2}-\\d{2}\\.jsonl$/.test(f.name)&&Date.parse(f.name.slice(0,10)+'T00:00:00Z')).sort((a,b)=>a.name.localeCompare(b.name));
+  const jsonl=files.filter(f=>f.type==='file'&&/^\d{4}-\d{2}-\d{2}\.jsonl$/.test(f.name)&&Date.parse(f.name.slice(0,10)+'T00:00:00Z')).sort((a,b)=>a.name.localeCompare(b.name));
   const mode=$('historyPeriod').value,start=historyPeriodStart(mode),eligible=jsonl.filter(f=>mode==='all'||Date.parse(f.name.slice(0,10)+'T23:59:59Z')>=start.getTime());
   const chosen=mode==='all'?eligible.slice(-1000):eligible.slice(-370);
   const batches=[];
