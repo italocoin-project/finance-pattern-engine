@@ -1,0 +1,3 @@
+{"timestamp_utc":"2026-11-03T01:07:27+00:00","source":"legacy_archive_migration","quotes":{"ETH":{"binance":2262.12,"coinbase":2258.69,"okx":2262.32,"kraken":2258.65}}}
+{"timestamp_utc":"2026-11-03T11:26:52+00:00","source":"legacy_archive_migration","quotes":{"ETH":{"binance":2269.92,"coinbase":2265.98,"okx":2269.84,"kraken":2266.04}}}
+{"timestamp_utc":"2026-11-03T12:54:12+00:00","source":"public_spot_ticker_apis","quotes":{"ETH":{"binance":2284.98,"coinbase":2281.21,"okx":2285.07,"kraken":2281.09}}}
