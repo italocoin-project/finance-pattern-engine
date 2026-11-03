@@ -8,6 +8,8 @@ main{max-width:850px;margin:auto;padding:28px 20px 64px}a{color:var(--accent)}.e
 </style>
 <title>Volumi, spread e liquidità nelle criptovalute | Finance Pattern Engine</title>
 <meta name="description" content="Guida pratica per capire volume crypto, spread denaro-lettera, profondità del book, slippage e limiti dei dati degli exchange.">
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" type="image/svg+xml" href="../assets/fpe-icon.svg">
 </head><body><main><a class="back" href="../index.html">← Torna a Finance Pattern Engine</a>
 <article><div class="eyebrow">Guida educativa · Mercati</div><h1>Volumi, spread e liquidità: come leggere un mercato crypto</h1>
 <p>Il prezzo mostrato su una schermata è solo una parte del mercato. Per capire quanto sia facile comprare o vendere un asset, occorre guardare anche al volume, allo spread e alla liquidità disponibile. Queste misure aiutano a interpretare i dati, ma non garantiscono che un ordine venga eseguito al prezzo atteso.</p>
@@ -19,4 +21,8 @@ main{max-width:850px;margin:auto;padding:28px 20px 64px}a{color:var(--accent)}.e
 <table><thead><tr><th>Indicatore</th><th>Domanda utile</th><th>Limite</th></tr></thead><tbody><tr><td>Volume 24h</td><td>Quanto è stato scambiato?</td><td>Non descrive da solo la profondità</td></tr><tr><td>Spread</td><td>Quanto distano bid e ask?</td><td>Può cambiare in pochi istanti</td></tr><tr><td>Profondità</td><td>Quanta quantità è disponibile?</td><td>Gli ordini possono essere cancellati</td></tr><tr><td>Slippage</td><td>Quanto può deviare l’esecuzione?</td><td>Dipende da ordine e condizioni reali</td></tr></tbody></table>
 <h2>5. Checklist prima di confrontare due exchange</h2><ul><li>Confronta la stessa coppia e lo stesso istante.</li><li>Verifica se le quotazioni sono in USD, USDT o un’altra valuta.</li><li>Guarda bid, ask e profondità, se disponibili.</li><li>Considera commissioni, conversioni, limiti e disponibilità dei prelievi.</li><li>Non interpretare una differenza di prezzo come profitto garantito.</li></ul>
 <div class="panel"><strong>Nota sui dati di questo sito</strong><p class="note">Le API pubbliche possono essere incomplete o temporaneamente non disponibili. Un prezzo dell’ultimo scambio non equivale al book completo e i dati storici salvati iniziano dalla prima raccolta riuscita. Questo contenuto è educativo e non costituisce consulenza finanziaria.</p></div></article>
-<footer>Finance Pattern Engine · <a href="../privacy.html">Privacy</a> · <a href="../terms.html">Note legali</a> · <a href="../index.html">Monitor mercati</a></footer></main></body></html>
+<footer>Finance Pattern Engine · <a href="../privacy.html">Privacy</a> · <a href="../terms.html">Note legali</a> · <a href="../index.html">Monitor mercati</a></footer></main>
+<script>
+if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('../sw.js',{scope:'../'}).catch(error=>console.warn('Offline mode unavailable:',error)));}
+</script>
+</body></html>
