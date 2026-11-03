@@ -1,0 +1,30 @@
+{
+  "id": "./",
+  "name": "Finance Pattern Engine",
+  "short_name": "FPE Markets",
+  "description": "Monitor dei mercati crypto, confronto exchange e storico pubblico dei prezzi.",
+  "lang": "it",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#070b16",
+  "theme_color": "#070b16",
+  "categories": ["finance", "utilities"],
+  "icons": [
+    {
+      "src": "./assets/fpe-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Classifica crypto",
+      "short_name": "Classifica",
+      "url": "./markets.html",
+      "icons": [{"src": "./assets/fpe-icon.svg", "sizes": "any", "type": "image/svg+xml"}]
+    }
+  ]
+}
