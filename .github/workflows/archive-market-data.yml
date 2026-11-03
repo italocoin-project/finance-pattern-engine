@@ -6,7 +6,7 @@ on:
       - ".github/workflows/archive-market-data.yml"
       - "scripts/archive_market_data.py"
   schedule:
-    - cron: "*/5 * * * *"
+    - cron: "0 * * * *"
   workflow_dispatch:
 
 permissions:
