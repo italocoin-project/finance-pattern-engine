@@ -1,3 +1,4 @@
 {"timestamp_utc":"2026-11-03T01:07:27+00:00","source":"legacy_archive_migration","quotes":{"AVAX":{"binance":8.413,"coinbase":8.399,"okx":8.412,"kraken":8.394}}}
 {"timestamp_utc":"2026-11-03T11:26:52+00:00","source":"legacy_archive_migration","quotes":{"AVAX":{"binance":8.524,"coinbase":8.514,"okx":8.523,"kraken":8.511}}}
 {"timestamp_utc":"2026-11-03T12:54:12+00:00","source":"public_spot_ticker_apis","quotes":{"AVAX":{"binance":8.671,"coinbase":8.663,"okx":8.677,"kraken":8.667}}}
+{"timestamp_utc":"2026-11-03T19:51:54+00:00","source":"public_spot_ticker_apis","quotes":{"AVAX":{"binance":8.582,"coinbase":8.578,"okx":8.584,"kraken":8.577}}}
