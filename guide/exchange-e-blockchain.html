@@ -8,6 +8,8 @@ main{max-width:850px;margin:auto;padding:28px 20px 64px}a{color:var(--accent)}.e
 </style>
 <title>Exchange e blockchain: differenze e verifica delle transazioni | Finance Pattern Engine</title>
 <meta name="description" content="Scopri la differenza tra scambi interni agli exchange e transazioni on-chain, come usare un block explorer e quali dati sono pubblici.">
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" type="image/svg+xml" href="../assets/fpe-icon.svg">
 </head><body><main><a class="back" href="../index.html">← Torna a Finance Pattern Engine</a>
 <article><div class="eyebrow">Guida educativa · Blockchain</div><h1>Exchange e blockchain: che cosa si può verificare davvero</h1>
 <p>Un movimento visibile nell’account di un exchange e una transazione registrata su una blockchain non sono necessariamente la stessa cosa. Capire questa differenza aiuta a leggere correttamente gli explorer, verificare gli hash e non attribuire a un indirizzo informazioni che i dati pubblici non dimostrano.</p>
@@ -18,4 +20,8 @@ main{max-width:850px;margin:auto;padding:28px 20px 64px}a{color:var(--accent)}.e
 <h2>4. Indirizzi, identità e attribuzioni</h2><p>Gli indirizzi pubblici sono identificatori tecnici, non nomi anagrafici. Un’etichetta assegnata da un servizio di analisi può essere utile, ma può anche essere incompleta o errata. Non attribuire una transazione a una persona basandoti soltanto su somiglianze, importi o orari.</p><p>Inoltre, gli exchange possono usare indirizzi condivisi, wallet omnibus e procedure di custodia. I flussi on-chain non rivelano necessariamente il saldo di ogni cliente né tutti i movimenti registrati nei sistemi interni.</p>
 <h2>5. Perché i prezzi pubblici non bastano per ricostruire i flussi</h2><p>Una quotazione, una candela oraria o il volume di una coppia descrivono dati di mercato. Non indicano da soli quali wallet abbiano trasferito fondi, né consentono di ricostruire ogni operazione privata. Per un’analisi attendibile, tieni separati prezzi degli exchange, transazioni on-chain e movimenti personali importati da documenti legittimamente disponibili.</p>
 <div class="panel"><strong>Uso responsabile</strong><p class="note">Finance Pattern Engine non garantisce l’identità dei titolari di indirizzi e non sostituisce l’explorer della rete. I dati possono essere ritardati o incompleti. Il contenuto è informativo, non costituisce consulenza finanziaria o legale.</p></div></article>
-<footer>Finance Pattern Engine · <a href="../privacy.html">Privacy</a> · <a href="../terms.html">Note legali</a> · <a href="../index.html">Monitor mercati</a></footer></main></body></html>
+<footer>Finance Pattern Engine · <a href="../privacy.html">Privacy</a> · <a href="../terms.html">Note legali</a> · <a href="../index.html">Monitor mercati</a></footer></main>
+<script>
+if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('../sw.js',{scope:'../'}).catch(error=>console.warn('Offline mode unavailable:',error)));}
+</script>
+</body></html>
