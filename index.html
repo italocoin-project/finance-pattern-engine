@@ -311,7 +311,7 @@ function setText(id,v){const e=$(id);if(e)e.textContent=v}
 function drawMarketChart(candles){const svg=$('marketChart');if(!candles||candles.length<2){svg.innerHTML='<text x="360" y="110" fill="#9caac4" text-anchor="middle">Dati storici non disponibili</text>';return}const values=candles.map(k=>num(k.close)),valid=values.every(Number.isFinite);if(!valid){svg.innerHTML='<text x="360" y="110" fill="#9caac4" text-anchor="middle">Dati storici non validi</text>';return}const min=Math.min(...values),max=Math.max(...values),range=max-min||Math.max(Math.abs(max)*0.001,1),first=values[0],last=values[values.length-1],change=first?(last-first)/first*100:NaN;const left=42,right=696,top=34,bottom=174,pts=values.map((v,i)=>({x:left+i*(right-left)/(values.length-1),y:bottom-(v-min)/range*(bottom-top)}));const path=pts.map((p,i)=>(i?'L':'M')+p.x.toFixed(1)+' '+p.y.toFixed(1)).join(' ');const start=Number(candles[0].time),end=Number(candles[candles.length-1].time),fmt=t=>Number.isFinite(t)?new Date(t).toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'}):'—';svg.innerHTML='<line x1="'+left+'" y1="'+bottom+'" x2="'+right+'" y2="'+bottom+'" stroke="#52637e"/><line x1="'+left+'" y1="'+top+'" x2="'+right+'" y2="'+top+'" stroke="#263650" stroke-dasharray="4 5"/><path d="'+path+'" fill="none" stroke="#79e0c3" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/><circle cx="'+pts[pts.length-1].x.toFixed(1)+'" cy="'+pts[pts.length-1].y.toFixed(1)+'" r="4" fill="#79e0c3"/><text x="'+left+'" y="20" fill="#9caac4" font-size="12">Max '+esc(money(max))+'</text><text x="'+right+'" y="20" fill="#9caac4" font-size="12" text-anchor="end">Min '+esc(money(min))+'</text><text x="'+left+'" y="198" fill="#9caac4" font-size="12">'+esc(fmt(start))+'</text><text x="'+right+'" y="198" fill="#9caac4" font-size="12" text-anchor="end">'+esc(fmt(end))+'</text><text x="360" y="218" fill="'+(change>=0?'#79e0c3':'#ff9b9b')+'" font-size="13" text-anchor="middle">Variazione periodo: '+esc(pct(change))+'</text>'}
 let savedMarketRecords=[],historyLoading=false;
 let liveHistoryRecords=[];
-const archiveApi='https://api.github.com/repos/italocoin-project/finance-pattern-engine/contents/data/market';
+const archiveApi='https://api.github.com/repos/italocoin-project/finance-pattern-engine/contents/data/market/pairs';
 function historyPeriodStart(mode,now=new Date()){const start=new Date(now);if(/^\d+h$/.test(mode)){start.setTime(now.getTime()-Number(mode.slice(0,-1))*3600000);return start}if(mode==='week'){start.setTime(now.getTime()-7*86400000);return start}if(mode==='month'){start.setTime(now.getTime()-30*86400000);return start}if(mode==='90d'){start.setTime(now.getTime()-90*86400000);return start}if(mode==='year'){start.setTime(now.getTime()-365*86400000);return start}return new Date(0)}
 function historyPrice(record,asset,exchange){const v=record&&record.quotes&&record.quotes[asset]&&record.quotes[asset][exchange];return typeof v==='number'&&Number.isFinite(v)&&v>0?v:null}
 async function fetchLiveExchangeHistory(asset,exchange,mode){
@@ -358,7 +358,7 @@ function renderSavedMarketHistory(){
   const pts=values.map((v,i)=>({x:left+i*(right-left)/(values.length-1),y:bottom-(v-lo)/span*(bottom-top)}));
   const path=pts.map((p,i)=>(i?'L':'M')+p.x.toFixed(1)+' '+p.y.toFixed(1)).join(' ');
   const fmt=t=>new Date(t).toLocaleString("it-IT",{timeZone:"UTC",day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"});
-  chart.innerHTML='<line x1="'+left+'" y1="'+bottom+'" x2="'+right+'" y2="'+bottom+'" stroke="#52637e"/><line x1="'+left+'" y1="'+top+'" x2="'+right+'" y2="'+top+'" stroke="#263650" stroke-dasharray="4 5"/><path d="'+path+'" fill="none" stroke="#71f0cb" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/><circle cx="'+pts[pts.length-1].x.toFixed(1)+'" cy="'+pts[pts.length-1].y.toFixed(1)+'" r="4" fill="#71f0cb"/><text x="'+left+'" y="18" fill="#9caac4" font-size="12">Max '+esc(money(hi))+'</text><text x="'+right+'" y="18" fill="#9caac4" font-size="12" text-anchor="end">Min '+esc(money(lo))+'</text><text x="'+left+'" y="195" fill="#9caac4" font-size="12">'+esc(fmt(Date.parse(first.timestamp_utc)))+'</text><text x="'+right+'" y="195" fill="#9caac4" font-size="12" text-anchor="end">'+esc(fmt(Date.parse(last.timestamp_utc)))+'</text><text x="360" y="220" fill="#9caac4" font-size="12" text-anchor="middle">'+records.length+' campioni orari disponibili · UTC</text>';
+  chart.innerHTML='<line x1="'+left+'" y1="'+bottom+'" x2="'+right+'" y2="'+bottom+'" stroke="#52637e"/><line x1="'+left+'" y1="'+top+'" x2="'+right+'" y2="'+top+'" stroke="#263650" stroke-dasharray="4 5"/><path d="'+path+'" fill="none" stroke="#71f0cb" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/><circle cx="'+pts[pts.length-1].x.toFixed(1)+'" cy="'+pts[pts.length-1].y.toFixed(1)+'" r="4" fill="#71f0cb"/><text x="'+left+'" y="18" fill="#9caac4" font-size="12">Max '+esc(money(hi))+'</text><text x="'+right+'" y="18" fill="#9caac4" font-size="12" text-anchor="end">Min '+esc(money(lo))+'</text><text x="'+left+'" y="195" fill="#9caac4" font-size="12">'+esc(fmt(Date.parse(first.timestamp_utc)))+'</text><text x="'+right+'" y="195" fill="#9caac4" font-size="12" text-anchor="end">'+esc(fmt(Date.parse(last.timestamp_utc)))+'</text><text x="360" y="220" fill="#9caac4" font-size="12" text-anchor="middle">'+records.length+' campioni disponibili · UTC</text>';
  }
  const change=first&&last&&price(first)!==0?(price(last)-price(first))/price(first)*100:NaN;
  setText('historyChange',Number.isFinite(change)?pct(change):'—');setText('historyCount',String(records.length));
@@ -366,18 +366,21 @@ function renderSavedMarketHistory(){
  setText('historyStatus',records.length+' campioni reali · '+(records.some(r=>r.source==='exchange_api')?(exchange.charAt(0).toUpperCase()+exchange.slice(1)+' · dati storici API'):(savedMarketRecords.length?'archivio caricato':'nessun archivio disponibile')));
 }
 async function loadSavedMarketHistory(){
- if(historyLoading)return;historyLoading=true;setText('historyStatus','Lettura archivio GitHub…');
+ if(historyLoading)return;historyLoading=true;setText('historyStatus','Lettura archivio compatto per asset…');
+ const asset=$('historyAsset').value;
  try{
-  const response=await fetch(archiveApi+'?ref=main',{cache:'no-store'});
+  const response=await fetch(archiveApi+'/'+encodeURIComponent(asset)+'?ref=main',{cache:'no-store'});
+  if(response.status===404){savedMarketRecords=[];renderSavedMarketHistory();await refreshHistorySelection();if(!savedMarketRecords.length&&!liveHistoryRecords.length)setText('historyStatus','Nessun archivio ancora disponibile per '+asset+'. Il primo campione arriverà con la prossima raccolta automatica.');return;}
   if(!response.ok)throw new Error('GitHub API HTTP '+response.status);
-  const files=await response.json(),jsonl=files.filter(f=>f.type==='file'&&f.name.length===16&&/^\d{4}-\d{2}-\d{2}\.jsonl$/.test(f.name)&&Date.parse(f.name.slice(0,10)+'T00:00:00Z')).sort((a,b)=>a.name.localeCompare(b.name));
+  const files=await response.json();
+  if(!Array.isArray(files))throw new Error('Indice archivio non valido');
+  const jsonl=files.filter(f=>f.type==='file'&&/^\\d{4}-\\d{2}-\\d{2}\\.jsonl$/.test(f.name)&&Date.parse(f.name.slice(0,10)+'T00:00:00Z')).sort((a,b)=>a.name.localeCompare(b.name));
   const mode=$('historyPeriod').value,start=historyPeriodStart(mode),eligible=jsonl.filter(f=>mode==='all'||Date.parse(f.name.slice(0,10)+'T23:59:59Z')>=start.getTime());
   const chosen=mode==='all'?eligible.slice(-1000):eligible.slice(-370);
-  // Limita le richieste parallele per non sovraccaricare GitHub e il browser quando si legge uno storico lungo.
   const batches=[];
   for(let offset=0;offset<chosen.length;offset+=8){
    const group=chosen.slice(offset,offset+8);
-   const result=await Promise.allSettled(group.map(async file=>{const res=await fetch(file.download_url,{cache:'no-store'});if(!res.ok)throw new Error('HTTP '+res.status);const text=await res.text();return text.split(String.fromCharCode(10)).map(line=>line.replaceAll(String.fromCharCode(13),'').trim()).filter(Boolean).flatMap(line=>{try{const record=JSON.parse(line);return record&&record.timestamp_utc&&record.quotes?[record]:[]}catch(parseError){console.warn('Riga archivio JSONL non valida ignorata:',file.name);return []}})}));
+   const result=await Promise.allSettled(group.map(async file=>{const res=await fetch(file.download_url,{cache:'no-store'});if(!res.ok)throw new Error('HTTP '+res.status);const body=await res.text();return body.split(String.fromCharCode(10)).map(line=>line.replaceAll(String.fromCharCode(13),'').trim()).filter(Boolean).flatMap(line=>{try{const record=JSON.parse(line);return record&&record.timestamp_utc&&record.quotes&&record.quotes[asset]?[record]:[]}catch(parseError){console.warn('Riga archivio JSONL non valida ignorata:',file.name);return []}})}));
    batches.push(...result);
   }
   const failed=batches.filter(x=>x.status==='rejected').length;
@@ -385,13 +388,13 @@ async function loadSavedMarketHistory(){
   savedMarketRecords.sort((a,b)=>Date.parse(a.timestamp_utc)-Date.parse(b.timestamp_utc));
   renderSavedMarketHistory();
   await refreshHistorySelection();
-  if(!savedMarketRecords.length)setText('historyStatus','Archivio vuoto o non ancora disponibile');
+  if(!savedMarketRecords.length)setText('historyStatus','Archivio vuoto o non ancora disponibile per '+asset);
   else if(failed)setText('historyStatus',savedMarketRecords.length+' campioni caricati · '+failed+' file non disponibili');
- }catch(e){setText('historyStatus','Archivio non raggiungibile');$('historyRows').innerHTML='<tr><td colspan="5" class="empty">Non riesco a leggere l’archivio GitHub in questo momento. Riprova con “Aggiorna storico”.</td></tr>';}
+ }catch(e){setText('historyStatus','Archivio non raggiungibile');$('historyRows').innerHTML='<tr><td colspan="5" class="empty">Non riesco a leggere l’archivio GitHub per questo asset. Riprova con “Aggiorna storico”.</td></tr>';}
  finally{historyLoading=false}
 }
 async function refreshHistorySelection(){liveHistoryRecords=[];renderSavedMarketHistory();const asset=$('historyAsset').value,exchange=$('historyExchange').value,mode=$('historyPeriod').value;const start=historyPeriodStart(mode),cached=savedMarketRecords.filter(r=>{const t=Date.parse(r.timestamp_utc);return Number.isFinite(t)&&t>=start.getTime()&&t<=Date.now()&&historyPrice(r,asset,exchange)!==null});if(cached.length>=2)return;setText('historyStatus','Nessun campione salvato sufficiente: richiesta candele storiche a '+exchange+'…');liveHistoryRecords=await fetchLiveExchangeHistory(asset,exchange,mode);renderSavedMarketHistory();if(!liveHistoryRecords.length&&cached.length<2)setText('historyStatus','Nessun campione nel periodo; la fonte exchange non ha restituito candele. Prova 24 ore o 7 giorni.');}
-['historyAsset','historyExchange','historyPeriod'].forEach(id=>$(id).addEventListener('change',()=>{if(id==='historyPeriod')loadSavedMarketHistory().then(refreshHistorySelection);else refreshHistorySelection()}));
+$('historyAsset').addEventListener('change',loadSavedMarketHistory);$('historyExchange').addEventListener('change',refreshHistorySelection);$('historyPeriod').addEventListener('change',loadSavedMarketHistory);
 $('historyRefresh').addEventListener('click',()=>loadSavedMarketHistory().then(refreshHistorySelection));
 function initMarketAssets(){const select=$('marketAsset');select.innerHTML=Object.entries(marketAssets).map(([symbol,a])=>'<option value="'+symbol+'">'+esc(a.name)+' ('+symbol+')</option>').join('');}
 function num(v){const n=Number(v);return Number.isFinite(n)?n:NaN}
