@@ -48,19 +48,19 @@ for relative in PAGES:
         p.is_file() and p.read_text(encoding="utf-8").lstrip().lower().startswith("<!doctype html>"),
         "HTML5 doctype missing"))
     add(f"{relative}: Italian document language", lambda p=path: require(
-        p.is_file() and re.search(r'<html\\b[^>]*\\blang=["\\']it["\\']', p.read_text(encoding="utf-8"), re.I),
+        p.is_file() and re.search(r'<html\b[^>]*\blang=["\']it["\']', p.read_text(encoding="utf-8"), re.I),
         'html lang="it" missing'))
     add(f"{relative}: page title", lambda p=path: require(
         p.is_file() and re.search(r"<title>[^<]+</title>", p.read_text(encoding="utf-8"), re.I),
         "title missing"))
     add(f"{relative}: responsive viewport", lambda p=path: require(
-        p.is_file() and re.search(r'<meta\\s+name=["\\']viewport["\\']', p.read_text(encoding="utf-8"), re.I),
+        p.is_file() and re.search(r'<meta\s+name=["\']viewport["\']', p.read_text(encoding="utf-8"), re.I),
         "viewport meta missing"))
 
 index_html = (ROOT / "index.html").read_text(encoding="utf-8")
 collector = (ROOT / "scripts/archive_market_data.py").read_text(encoding="utf-8")
-archive_map = re.search(r"ASSETS\\s*=\\s*\\{(.*?)\\n\\}", collector, re.S)
-market_map = re.search(r"const\\s+marketAssets\\s*=\\s*\\{(.*?)\\n\\};", index_html, re.S)
+archive_map = re.search(r"ASSETS\s*=\s*\{(.*?)\n\}", collector, re.S)
+market_map = re.search(r"const\s+marketAssets\s*=\s*\{(.*?)\n\};", index_html, re.S)
 require(archive_map is not None, "collector ASSETS mapping not found")
 require(market_map is not None, "homepage marketAssets mapping not found")
 archive_block = archive_map.group(1)
@@ -69,20 +69,20 @@ market_block = market_map.group(1)
 # 30 cross-project checks: every tracked asset exists in both live UI and archive collector.
 for symbol in ASSET_NAMES:
     add(f"asset {symbol}: live UI and archive mappings agree", lambda s=symbol: require(
-        re.search(rf"^\\s*{re.escape(s)}\\s*:", archive_block, re.M)
-        and re.search(rf"^\\s*{re.escape(s)}\\s*:", market_block, re.M),
+        re.search(rf"^\s*{re.escape(s)}\s*:", archive_block, re.M)
+        and re.search(rf"^\s*{re.escape(s)}\s*:", market_block, re.M),
         f"{s} missing from one or both market mappings"))
 
 # 12 exchange checks: configured, parsed, and selectable in the history interface.
-exchange_list = re.search(r"EXCHANGES\\s*=\\s*\\(([^)]*)\\)", collector)
+exchange_list = re.search(r"EXCHANGES\s*=\s*\(([^)]*)\)", collector)
 require(exchange_list is not None, "EXCHANGES tuple missing")
 exchange_values = exchange_list.group(1)
-history_select = re.search(r'<select\\s+id=["\\']historyExchange["\\']>(.*?)</select>', index_html, re.S)
+history_select = re.search(r'<select\s+id=["\']historyExchange["\']>(.*?)</select>', index_html, re.S)
 require(history_select is not None, "history exchange selector missing")
 history_options = history_select.group(1)
 for exchange in EXCHANGE_NAMES:
     add(f"{exchange}: collector configuration", lambda e=exchange: require(
-        re.search(rf'["\\']{re.escape(e)}["\\']', exchange_values),
+        re.search(rf'["\']{re.escape(e)}["\']', exchange_values),
         f"{e} missing from EXCHANGES"))
     if exchange == "kraken":
         parser_ok = "KRAKEN_PAIRS.get(asset or" in collector
@@ -92,12 +92,12 @@ for exchange in EXCHANGE_NAMES:
         parser_ok = f'elif exchange == "{exchange}":' in collector
     add(f"{exchange}: price parser exists", lambda ok=parser_ok, e=exchange: require(ok, f"{e} parser missing"))
     add(f"{exchange}: history filter exists", lambda e=exchange: require(
-        re.search(rf'<option\\s+value=["\\']{re.escape(e)}["\\']', history_options),
+        re.search(rf'<option\s+value=["\']{re.escape(e)}["\']', history_options),
         f"{e} option missing from history selector"))
 
 # Eight global checks complete the 100-check audit.
 archive_workflow = (ROOT / ".github/workflows/archive-market-data.yml").read_text(encoding="utf-8")
-all_html = "\\n".join((ROOT / page).read_text(encoding="utf-8") for page in PAGES)
+all_html = "\n".join((ROOT / page).read_text(encoding="utf-8") for page in PAGES)
 manifest = json.loads((ROOT / "manifest.webmanifest").read_text(encoding="utf-8"))
 service_worker = (ROOT / "sw.js").read_text(encoding="utf-8")
 privacy = (ROOT / "privacy.html").read_text(encoding="utf-8")
@@ -150,6 +150,6 @@ for name, check in checks:
         failed.append((name, str(exc)))
         print(f"FAIL {name}: {exc}")
 
-print(f"\\nSite audit: {len(checks) - len(failed)}/{len(checks)} passed; {len(failed)} failed.")
+print(f"\nSite audit: {len(checks) - len(failed)}/{len(checks)} passed; {len(failed)} failed.")
 if failed:
     raise SystemExit(1)
