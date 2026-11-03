@@ -63,13 +63,13 @@ archive_map = re.search(r"ASSETS\s*=\s*\{(.*?)\n\}", collector, re.S)
 market_map = re.search(r"const\s+marketAssets\s*=\s*\{(.*?)\n\};", index_html, re.S)
 require(archive_map is not None, "collector ASSETS mapping not found")
 require(market_map is not None, "homepage marketAssets mapping not found")
-archive_block = archive_map.group(1)
+archive_block = archive_map.group(1).replace(chr(34), "").replace(chr(39), "")
 market_block = market_map.group(1)
 
 # 30 cross-project checks: every tracked asset exists in both live UI and archive collector.
 for symbol in ASSET_NAMES:
     add(f"asset {symbol}: live UI and archive mappings agree", lambda s=symbol: require(
-        re.search(rf"^\s*['"]?{re.escape(s)}['"]?\s*:", archive_block, re.M)
+        re.search(rf"^\s*{re.escape(s)}\s*:", archive_block, re.M)
         and re.search(rf"^\s*{re.escape(s)}\s*:", market_block, re.M),
         f"{s} missing from one or both market mappings"))
 
