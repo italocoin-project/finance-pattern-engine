@@ -47,7 +47,17 @@ jobs:
               raise SystemExit("SEO canonical or Open Graph metadata missing")
           Path("/tmp/site.js").write_text("\n".join(scripts), encoding="utf-8")
           PY
-          node --check /tmp/site.js
+          PY
+      - name: Check index JavaScript syntax
+        run: node --check /tmp/site.js
+          market_scripts = re.findall(r"<script>(.*?)</script>", Path("markets.html").read_text(encoding="utf-8"), re.S)
+          if len(market_scripts) != 1:
+              raise SystemExit(f"Expected one inline markets script, found {len(market_scripts)}")
+          Path("/tmp/markets.js").write_text("\n".join(market_scripts), encoding="utf-8")
+          PY
+      - name: Check markets JavaScript syntax
+        run: node --check /tmp/markets.js
+      - name: Compile Python collector and tests
       - name: Compile Python collector and tests
         run: python3 -m py_compile scripts/archive_market_data.py scripts/test_archive_market_data.py
       - name: Run offline collector tests
