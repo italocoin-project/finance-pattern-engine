@@ -2,3 +2,4 @@
 {"timestamp_utc":"2026-11-07T08:39:02+00:00","source":"public_spot_ticker_apis","quotes":{"ETH":{"binance":2248.59,"coinbase":2245.24,"okx":2248.36,"kraken":2245.52}}}
 {"timestamp_utc":"2026-11-07T15:11:21+00:00","source":"public_spot_ticker_apis","quotes":{"ETH":{"binance":2242.76,"coinbase":2239.59,"okx":2242.61,"kraken":2239.78}}}
 {"timestamp_utc":"2026-11-07T19:27:34+00:00","source":"public_spot_ticker_apis","quotes":{"ETH":{"binance":2234.2,"coinbase":2230.92,"okx":2234.15,"kraken":2231.02}}}
+{"timestamp_utc":"2026-11-07T22:56:50+00:00","source":"public_spot_ticker_apis","quotes":{"ETH":{"binance":2235.24,"coinbase":2231.81,"okx":2235.21,"kraken":2232.13}}}
