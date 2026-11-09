@@ -1,2 +1,3 @@
 {"timestamp_utc":"2026-11-09T05:29:44+00:00","source":"public_spot_ticker_apis","quotes":{"SEI":{"binance":0.04338,"coinbase":0.04328,"okx":0.04339,"kraken":0.0434}}}
 {"timestamp_utc":"2026-11-09T14:16:34+00:00","source":"public_spot_ticker_apis","quotes":{"SEI":{"binance":0.04433,"coinbase":0.04429,"okx":0.04435,"kraken":0.04431}}}
+{"timestamp_utc":"2026-11-09T23:28:35+00:00","source":"public_spot_ticker_apis","quotes":{"SEI":{"binance":0.04413,"coinbase":0.04409,"okx":0.04417,"kraken":0.04406}}}
