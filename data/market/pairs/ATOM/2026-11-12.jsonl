@@ -1,2 +1,3 @@
 {"timestamp_utc":"2026-11-12T03:08:16+00:00","source":"public_spot_ticker_apis","quotes":{"ATOM":{"binance":1.393,"coinbase":1.3926,"okx":1.395,"kraken":1.3935}}}
 {"timestamp_utc":"2026-11-12T11:07:19+00:00","source":"public_spot_ticker_apis","quotes":{"ATOM":{"binance":1.391,"coinbase":1.3914,"okx":1.393,"kraken":1.3909}}}
+{"timestamp_utc":"2026-11-12T18:53:46+00:00","source":"public_spot_ticker_apis","quotes":{"ATOM":{"binance":1.409,"coinbase":1.409,"okx":1.411,"kraken":1.4091}}}

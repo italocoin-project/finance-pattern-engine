@@ -1,2 +1,3 @@
 {"timestamp_utc":"2026-11-12T03:08:16+00:00","source":"public_spot_ticker_apis","quotes":{"LTC":{"binance":49.98,"coinbase":49.915,"okx":49.99,"kraken":49.93}}}
 {"timestamp_utc":"2026-11-12T11:07:19+00:00","source":"public_spot_ticker_apis","quotes":{"LTC":{"binance":49.52,"coinbase":49.462,"okx":49.52,"kraken":49.47}}}
+{"timestamp_utc":"2026-11-12T18:53:46+00:00","source":"public_spot_ticker_apis","quotes":{"LTC":{"binance":49.75,"coinbase":49.69,"okx":49.75,"kraken":49.72}}}
