@@ -1,3 +1,4 @@
 {"timestamp_utc":"2026-11-19T00:46:58+00:00","source":"public_spot_ticker_apis","quotes":{"OP":{"binance":0.0763,"coinbase":0.07626,"okx":0.07633,"kraken":0.0763}}}
 {"timestamp_utc":"2026-11-19T08:01:22+00:00","source":"public_spot_ticker_apis","quotes":{"OP":{"binance":0.0767,"coinbase":0.07656,"okx":0.07671,"kraken":0.0767}}}
 {"timestamp_utc":"2026-11-19T17:19:15+00:00","source":"public_spot_ticker_apis","quotes":{"OP":{"binance":0.0742,"coinbase":0.07416,"okx":0.07426,"kraken":0.0743}}}
+{"timestamp_utc":"2026-11-19T23:39:29+00:00","source":"public_spot_ticker_apis","quotes":{"OP":{"binance":0.0749,"coinbase":0.07487,"okx":0.075,"kraken":0.075}}}
